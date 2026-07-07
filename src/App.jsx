@@ -1247,8 +1247,8 @@ function YogaTab() {
   const section = YOGA_SECTIONS.find(s => s.id === activeSection);
   const toggle = key => setCompleted(p => ({ ...p, [key]: !p[key] }));
 
-  const doneCount = section ? section.poses.filter(p => completed[`${activeSection}-${p.id}`]).length : 0;
-  const totalCount = section ? section.poses.length : 0;
+  const doneCount = section ? section.sequences.filter((_, i) => completed[`${activeSection}-${i}`]).length : 0;
+  const totalCount = section ? section.sequences.length : 0;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
   const circ = 2 * Math.PI * 16;
 
@@ -2285,13 +2285,36 @@ export default function FitnessTracker() {
   const todayKey = getTodayKey();
   const weekKey = getWeekKey();
   const [synced, setSynced] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [checked, setChecked] = useState(() => loadS(`ex-${todayKey}`, {}));
+  const [weeklyWorkouts, setWeeklyWorkouts] = useState(() => loadS(`wkly-${weekKey}`, {}));
+  const [weightLog, setWeightLog] = useState(() => loadS("weight-log", []));
+  const [foodLog, setFoodLog] = useState(() => loadS(`food-${todayKey}`, []));
+  const [dailyStats, setDailyStats] = useState(() => loadS(`stats-${todayKey}`, { steps: 0, water: 0, sleep: 0 }));
+  const [waterTaps, setWaterTaps] = useState(() => loadS(`water-${todayKey}`, 0));
+  const [supplements, setSupplements] = useState(() => loadS("supplements-list", ["Collagen peptides","Creatine 5g","Magnesium","Vitamin D"]));
+  const [suppChecked, setSuppChecked] = useState(() => loadS(`supp-${todayKey}`, {}));
+  const [weeklyHistory, setWeeklyHistory] = useState(() => loadS("weekly-history", {}));
+  const [splurgeRewards, setSplurgeRewards] = useState(() => loadS("splurge-rewards", { "7": "", "30": "", "90": "" }));
+  const [measurements, setMeasurements] = useState(() => loadS("body-measurements", { waist: "", hips: "", arms: "", thighs: "" }));
+  const [junkDelay, setJunkDelay] = useState(0);
+  const [habits, setHabits] = useState(() => loadS("habits-list", [
+    { id: "h1", name: "No phone before bed", emoji: "🌙", color: "rgba(192,132,160,0.15)", streak: 0, lastDone: "" },
+    { id: "h2", name: "Skincare routine", emoji: "🧴", color: "rgba(160,124,192,0.15)", streak: 0, lastDone: "" },
+    { id: "h3", name: "Journal / gratitude", emoji: "📓", color: "rgba(123,191,160,0.15)", streak: 0, lastDone: "" },
+  ]));
+  const [habitsDone, setHabitsDone] = useState(() => loadS(`habits-done-${todayKey}`, {}));
+  const [cycleLog, setCycleLog] = useState(() => loadS("cycle-log", {}));
+  const [suppRoutineWeek, setSuppRoutineWeek] = useState(() => loadS("supp-routine-week", 1));
+  const [suppRoutineComplete, setSuppRoutineComplete] = useState(() => loadS("supp-routine-complete", false));
+  const [customSupps, setCustomSupps] = useState(() => loadS("custom-supps", []));
+  const [customSuppsDone, setCustomSuppsDone] = useState(() => loadS(`custom-supps-done-${todayKey}`, {}));
 
   useEffect(() => {
     runAutoResets();
-    // Load from Supabase on startup
     supaLoad().then(() => {
       setSynced(true);
-      // Force re-render with cloud data by reloading state
       setWeightLog(loadS("weight-log", []));
       setFoodLog(loadS(`food-${todayKey}`, []));
       setDailyStats(loadS(`stats-${todayKey}`, { steps: 0, water: 0, sleep: 0 }));
@@ -2312,34 +2335,6 @@ export default function FitnessTracker() {
       setSplurgeRewards(loadS("splurge-rewards", { "7": "", "30": "", "90": "" }));
     });
   }, []);
-
-  const [activeTab, setActiveTab] = useState("home");
-  const [selectedDay, setSelectedDay] = useState(1);
-  const [checked, setChecked] = useState(() => loadS(`ex-${todayKey}`, {}));
-  const [weeklyWorkouts, setWeeklyWorkouts] = useState(() => loadS(`wkly-${weekKey}`, {}));
-  const [weightLog, setWeightLog] = useState(() => loadS("weight-log", []));
-  const [foodLog, setFoodLog] = useState(() => loadS(`food-${todayKey}`, []));
-  const [dailyStats, setDailyStats] = useState(() => loadS(`stats-${todayKey}`, { steps: 0, water: 0, sleep: 0 }));
-  const [waterTaps, setWaterTaps] = useState(() => loadS(`water-${todayKey}`, 0)); // number of 8oz taps
-  const [supplements, setSupplements] = useState(() => loadS("supplements-list", ["Collagen peptides","Creatine 5g","Magnesium","Vitamin D"]));
-  const [suppChecked, setSuppChecked] = useState(() => loadS(`supp-${todayKey}`, {}));
-  const [weeklyHistory, setWeeklyHistory] = useState(() => loadS("weekly-history", {})); // date -> { workout, yoga, nutrition }
-  const [splurgeRewards, setSplurgeRewards] = useState(() => loadS("splurge-rewards", { "7": "", "30": "", "90": "" }));
-  const [measurements, setMeasurements] = useState(() => loadS("body-measurements", { waist: "", hips: "", arms: "", thighs: "" }));
-  const [junkDelay, setJunkDelay] = useState(0);
-
-  // Habits state
-  const [habits, setHabits] = useState(() => loadS("habits-list", [
-    { id: "h1", name: "No phone before bed", emoji: "🌙", color: "rgba(192,132,160,0.15)", streak: 0, lastDone: "" },
-    { id: "h2", name: "Skincare routine", emoji: "🧴", color: "rgba(160,124,192,0.15)", streak: 0, lastDone: "" },
-    { id: "h3", name: "Journal / gratitude", emoji: "📓", color: "rgba(123,191,160,0.15)", streak: 0, lastDone: "" },
-  ]));
-  const [habitsDone, setHabitsDone] = useState(() => loadS(`habits-done-${todayKey}`, {}));
-  const [cycleLog, setCycleLog] = useState(() => loadS("cycle-log", {}));
-  const [suppRoutineWeek, setSuppRoutineWeek] = useState(() => loadS("supp-routine-week", 1));
-  const [suppRoutineComplete, setSuppRoutineComplete] = useState(() => loadS("supp-routine-complete", false));
-  const [customSupps, setCustomSupps] = useState(() => loadS("custom-supps", []));
-  const [customSuppsDone, setCustomSuppsDone] = useState(() => loadS(`custom-supps-done-${todayKey}`, {}));
 
   useEffect(() => { saveS(`ex-${todayKey}`, checked); }, [checked]);
   useEffect(() => { saveS(`wkly-${weekKey}`, weeklyWorkouts); }, [weeklyWorkouts]);
