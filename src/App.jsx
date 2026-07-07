@@ -1238,14 +1238,20 @@ function WeightSection({ weightLog, setWeightLog }) {
 }
 
 // ─── YOGA TAB ─────────────────────────────────────────────────────────────────
-function YogaTab() {
+function YogaTab({ markTodayDots }) {
+  const todayKey = getTodayKey();
   const [activeSection, setActiveSection] = useState("tos");
   const [expandedSeq, setExpandedSeq] = useState(null);
-  const [completed, setCompleted] = useState({});
+  const [completed, setCompleted] = useState(() => loadS(`yoga-${todayKey}`, {}));
+  const [sessions, setSessions] = useState(() => loadS(`yoga-sessions-${todayKey}`, {}));
   const [timerActive, setTimerActive] = useState(null);
   const [timerSec, setTimerSec] = useState(0);
   const section = YOGA_SECTIONS.find(s => s.id === activeSection);
-  const toggle = key => setCompleted(p => ({ ...p, [key]: !p[key] }));
+  const toggle = key => {
+    const updated = { ...completed, [key]: !completed[key] };
+    setCompleted(updated);
+    saveS(`yoga-${todayKey}`, updated);
+  };
 
   const doneCount = section ? section.sequences.filter((_, i) => completed[`${activeSection}-${i}`]).length : 0;
   const totalCount = section ? section.sequences.length : 0;
@@ -1346,7 +1352,44 @@ function YogaTab() {
 
       {/* Session complete button */}
       {pct === 100 && (
-        <button style={{ width: "100%", marginTop: 4, padding: 12, borderRadius: 12, border: "none", background: `linear-gradient(135deg, ${section.color}, #A07CC0)`, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>🌸 Session Complete!</button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+          <button onClick={() => {
+            markTodayDots && markTodayDots({ yoga: true });
+            const updated = { ...sessions, [activeSection]: (sessions[activeSection] || 0) + 1 };
+            setSessions(updated);
+            saveS(`yoga-sessions-${todayKey}`, updated);
+          }} style={{ width: "100%", padding: 12, borderRadius: 12, border: "none", background: `linear-gradient(135deg, ${section.color}, #A07CC0)`, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
+            🌸 Session Complete! {sessions[activeSection] > 0 ? `(${sessions[activeSection] + 1} today)` : ""}
+          </button>
+          {sessions[activeSection] > 0 && (
+            <button onClick={() => {
+              // Reset this section's completed poses for a fresh session
+              const cleared = Object.fromEntries(Object.entries(completed).filter(([k]) => !k.startsWith(activeSection)));
+              setCompleted(cleared);
+              saveS(`yoga-${todayKey}`, cleared);
+            }} style={{ width: "100%", padding: 10, borderRadius: 12, border: `1px solid ${section.color}40`, background: `${section.color}10`, color: section.color, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              🔄 Log 2nd session
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Log extra session even if not complete */}
+      {pct < 100 && sessions[activeSection] > 0 && (
+        <button onClick={() => {
+          const cleared = Object.fromEntries(Object.entries(completed).filter(([k]) => !k.startsWith(activeSection)));
+          setCompleted(cleared);
+          saveS(`yoga-${todayKey}`, cleared);
+        }} style={{ width: "100%", marginTop: 4, padding: 10, borderRadius: 12, border: `1px solid ${section.color}40`, background: `${section.color}10`, color: section.color, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+          🔄 Log 2nd session ({sessions[activeSection]} done today)
+        </button>
+      )}
+
+      {/* Sessions done today indicator */}
+      {sessions[activeSection] > 0 && (
+        <div style={{ textAlign: "center", marginTop: 8, fontSize: 10, color: section.color, fontWeight: 700 }}>
+          ✓ {sessions[activeSection]} session{sessions[activeSection] > 1 ? "s" : ""} logged today
+        </div>
       )}
     </div>
   );
@@ -2613,7 +2656,7 @@ export default function FitnessTracker() {
       {activeTab === "weight" && <WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} />}
 
       {/* ── YOGA TAB ── */}
-      {activeTab === "yoga" && <YogaTab />}
+      {activeTab === "yoga" && <YogaTab markTodayDots={markTodayDots} />}
 
       {activeTab === "plan" && <PlanTab weeklyWorkouts={weeklyWorkouts} />}
     </div>
