@@ -697,8 +697,63 @@ const getWeekKey = () => {
   const jan1 = new Date(d.getFullYear(), 0, 1);
   return `wk-${Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7)}-${d.getFullYear()}`;
 };
-function loadS(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
-function saveS(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+// ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
+const SUPA_URL = "https://jnbleuqhwplejuhaqooo.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuYmxldXFod3BsZWp1aGFxb29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MzQ1ODYsImV4cCI6MjA5OTAxMDU4Nn0.BPCtN5G2PpuFxPX4qAq8IY2ympVX6NZwhznmo7kRuPI";
+
+// In-memory cache — syncs to Supabase in background
+let _cache = {};
+let _syncTimer = null;
+let _loaded = false;
+
+async function supaLoad() {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/user_data?id=eq.app&select=data`, {
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+    });
+    const rows = await res.json();
+    if (rows && rows[0]?.data) {
+      _cache = rows[0].data;
+      // Also write to localStorage as offline fallback
+      Object.entries(_cache).forEach(([k, v]) => {
+        try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+      });
+    }
+    _loaded = true;
+  } catch {
+    // Offline — use localStorage fallback
+    _loaded = true;
+  }
+}
+
+async function supaSync() {
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/user_data?id=eq.app`, {
+      method: "PATCH",
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ data: _cache, updated_at: new Date().toISOString() })
+    });
+  } catch {}
+}
+
+function loadS(key, fallback) {
+  try {
+    // Use cache first, then localStorage fallback
+    if (key in _cache) return _cache[key] ?? fallback;
+    const local = localStorage.getItem(key);
+    return local ? JSON.parse(local) : fallback;
+  } catch { return fallback; }
+}
+
+function saveS(key, val) {
+  try {
+    _cache[key] = val;
+    localStorage.setItem(key, JSON.stringify(val));
+    // Debounce sync — wait 2s after last save to batch writes
+    if (_syncTimer) clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(supaSync, 2000);
+  } catch {}
+}
 
 // ─── AUTO-RESET LOGIC ────────────────────────────────────────────────────────
 function runAutoResets() {
@@ -2229,8 +2284,34 @@ function PlanTab({ weeklyWorkouts }) {
 export default function FitnessTracker() {
   const todayKey = getTodayKey();
   const weekKey = getWeekKey();
+  const [synced, setSynced] = useState(false);
 
-  useEffect(() => { runAutoResets(); }, []);
+  useEffect(() => {
+    runAutoResets();
+    // Load from Supabase on startup
+    supaLoad().then(() => {
+      setSynced(true);
+      // Force re-render with cloud data by reloading state
+      setWeightLog(loadS("weight-log", []));
+      setFoodLog(loadS(`food-${todayKey}`, []));
+      setDailyStats(loadS(`stats-${todayKey}`, { steps: 0, water: 0, sleep: 0 }));
+      setWaterTaps(loadS(`water-${todayKey}`, 0));
+      setWeeklyHistory(loadS("weekly-history", {}));
+      setWeeklyWorkouts(loadS(`wkly-${weekKey}`, {}));
+      setChecked(loadS(`ex-${todayKey}`, {}));
+      setHabits(loadS("habits-list", [
+        { id: "h1", name: "No phone before bed", emoji: "🌙", color: "rgba(192,132,160,0.15)", streak: 0, lastDone: "" },
+        { id: "h2", name: "Skincare routine", emoji: "🧴", color: "rgba(160,124,192,0.15)", streak: 0, lastDone: "" },
+        { id: "h3", name: "Journal / gratitude", emoji: "📓", color: "rgba(123,191,160,0.15)", streak: 0, lastDone: "" },
+      ]));
+      setCycleLog(loadS("cycle-log", {}));
+      setSuppRoutineWeek(loadS("supp-routine-week", 1));
+      setSuppRoutineComplete(loadS("supp-routine-complete", false));
+      setCustomSupps(loadS("custom-supps", []));
+      setMeasurements(loadS("body-measurements", { waist: "", hips: "", arms: "", thighs: "" }));
+      setSplurgeRewards(loadS("splurge-rewards", { "7": "", "30": "", "90": "" }));
+    });
+  }, []);
 
   const [activeTab, setActiveTab] = useState("home");
   const [selectedDay, setSelectedDay] = useState(1);
@@ -2342,7 +2423,13 @@ export default function FitnessTracker() {
           <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.5px" }}>Soft Life, Hard Work <span style={{ color: C.dotPurple }}>❀</span></div>
           <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>Strength · Recovery · Yoga · TOS Care</div>
         </div>
-        <button onClick={resetWeekManual} style={{ fontSize: 10, color: C.muted, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, padding: "5px 10px", cursor: "pointer", flexShrink: 0 }}>🔄 Reset</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ fontSize: 9, color: synced ? C.dotGreen : C.muted, display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: synced ? C.dotGreen : C.muted }} />
+            {synced ? "Synced" : "Syncing…"}
+          </div>
+          <button onClick={resetWeekManual} style={{ fontSize: 10, color: C.muted, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, padding: "5px 10px", cursor: "pointer", flexShrink: 0 }}>🔄</button>
+        </div>
       </div>
 
       {/* More drawer */}
