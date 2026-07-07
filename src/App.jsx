@@ -1387,8 +1387,8 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
             {[
               { emoji: "⚖️", label: "Weight", color: C.rose, bg: "rgba(192,132,160,0.12)", tab: "weight" },
               { emoji: "🥗", label: "Food", color: C.sage, bg: "rgba(123,191,160,0.12)", tab: "nutrition" },
-              { emoji: "💧", label: "Water", color: C.dotBlue, bg: "rgba(107,230,247,0.12)", tab: "nutrition" },
-              { emoji: "😴", label: "Sleep", color: C.plum, bg: "rgba(160,124,192,0.12)", tab: "nutrition" },
+              { emoji: "💧", label: "Water", color: C.dotBlue, bg: "rgba(107,230,247,0.12)", tab: "habits" },
+              { emoji: "😴", label: "Sleep", color: C.plum, bg: "rgba(160,124,192,0.12)", tab: "habits" },
             ].map(q => (
               <button key={q.label} onClick={() => setActiveTab(q.tab)} style={{ flex: 1, padding: "11px 4px", borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: q.bg, color: q.color, fontFamily: "inherit" }}>
                 <span style={{ fontSize: 18 }}>{q.emoji}</span>
@@ -2099,6 +2099,133 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   );
 }
 
+function WeightTab({ weightLog, setWeightLog, measurements, setMeasurements }) {
+  const latest = weightLog.length > 0 ? parseFloat(weightLog[0].weight) : START_WEIGHT;
+  const lost = +(START_WEIGHT - latest).toFixed(1);
+  const remaining = +(latest - GOAL_WEIGHT).toFixed(1);
+  const pct = Math.min(100, Math.max(0, Math.round(((START_WEIGHT - latest) / (START_WEIGHT - GOAL_WEIGHT)) * 100)));
+  const td = calcTargetDate(latest);
+  const r = 38; const circ = 2 * Math.PI * r;
+  return (
+    <div style={{ padding: "16px 14px 24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+        {[
+          { label: "Current", val: `${latest}`, unit: "lbs", color: "#e0c8f0" },
+          { label: "Lost", val: `${lost > 0 ? lost : 0}`, unit: "lbs", color: C.rose },
+          { label: "To go", val: `${remaining > 0 ? remaining : 0}`, unit: "lbs", color: C.amber },
+        ].map(s => (
+          <div key={s.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, marginBottom: 5 }}>{s.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.val}</div>
+            <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{s.unit}</div>
+          </div>
+        ))}
+      </div>
+      <Card style={{ display: "flex", gap: 14, alignItems: "center" }}>
+        <svg width="96" height="96" viewBox="0 0 96 96" style={{ flexShrink: 0 }}>
+          <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8"/>
+          <circle cx="48" cy="48" r={r} fill="none" stroke={C.rose} strokeWidth="8"
+            strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} strokeLinecap="round"
+            transform="rotate(-90 48 48)"/>
+          <text x="48" y="44" textAnchor="middle" fontSize="16" fontWeight="800" fill="#e0c8f0">{pct}%</text>
+          <text x="48" y="57" textAnchor="middle" fontSize="9" fill={C.sub}>progress</text>
+        </svg>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#e0c8f0", marginBottom: 4 }}>Goal: {GOAL_WEIGHT} lbs</div>
+          {td ? <>
+            <div style={{ fontSize: 10, color: C.sub, marginBottom: 2 }}>Estimated date</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.amber }}>{fmtDate(td)}</div>
+            <div style={{ fontSize: 10, color: C.sub, marginTop: 2 }}>{weeksAway(td)}</div>
+          </> : <div style={{ fontSize: 10, color: C.sub }}>Log more weight to see estimate</div>}
+        </div>
+      </Card>
+      <Card><WeightSection weightLog={weightLog} setWeightLog={setWeightLog} /></Card>
+      <Card>
+        <SectionLabel>Body measurements</SectionLabel>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {Object.keys(measurements).map(key => (
+            <div key={key}>
+              <div style={{ fontSize: 9, color: C.sub, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>{key} (in)</div>
+              <input type="number" value={measurements[key]} onChange={e => setMeasurements(p => ({ ...p, [key]: e.target.value }))} placeholder="—"
+                style={{ width: "100%", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+            </div>
+          ))}
+        </div>
+      </Card>
+      <Card accent={C.plum}>
+        <SectionLabel>📸 Progress Photo Reminder</SectionLabel>
+        <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.7 }}>Every <span style={{ color: "#d0c0e0" }}>2–4 weeks</span> — same lighting, same pose, same time of day. The mirror lies. Photos reveal what the scale never will.</div>
+      </Card>
+    </div>
+  );
+}
+
+function PlanTab({ weeklyWorkouts }) {
+  const [expandedDay, setExpandedDay] = useState(null);
+  return (
+    <div style={{ padding: "16px 14px 24px" }}>
+      <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 4 }}>Your Week 🏹</div>
+      <div style={{ fontSize: 10, color: C.sub, marginBottom: 16 }}>5-day strength + recovery plan · tap a day to see exercises</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 9 }}>
+        {DAYS.slice(0, 4).map(d => {
+          const done = weeklyWorkouts[d.id];
+          const isOpen = expandedDay === d.id;
+          return (
+            <div key={d.id} onClick={() => setExpandedDay(isOpen ? null : d.id)} style={{ background: done ? `${d.color}12` : "rgba(255,255,255,0.04)", border: `1.5px solid ${isOpen ? d.color : done ? `${d.color}40` : "rgba(255,255,255,0.08)"}`, borderRadius: 14, padding: 13, cursor: "pointer", transition: "all 0.2s" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                <div style={{ fontSize: 8, fontWeight: 800, color: done ? d.color : C.muted, textTransform: "uppercase", letterSpacing: .5 }}>Day {d.id}</div>
+                {done && <div style={{ fontSize: 10, color: d.color }}>✓</div>}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 3 }}>{d.label.replace(`Day ${d.id} — `, "")}</div>
+              <div style={{ fontSize: 9, color: C.sub, marginBottom: 8 }}>{d.focus}</div>
+              <div style={{ display: "flex", gap: 3 }}>
+                {d.exercises.slice(0, 5).map((_, i) => (
+                  <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: done ? d.color : "rgba(255,255,255,0.15)" }} />
+                ))}
+                {d.exercises.length > 5 && <div style={{ fontSize: 8, color: C.muted, marginLeft: 2 }}>+{d.exercises.length - 5}</div>}
+              </div>
+              {isOpen && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+                  {d.exercises.map(ex => (
+                    <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: 11 }}>
+                      <span style={{ color: "#d0c0e0" }}>{ex.name}</span>
+                      <span style={{ color: C.muted, fontSize: 10 }}>{ex.sets > 1 ? `${ex.sets}×${ex.reps}` : ex.reps}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {DAYS.slice(4).map(d => {
+        const done = weeklyWorkouts[d.id];
+        const isOpen = expandedDay === d.id;
+        return (
+          <div key={d.id} onClick={() => setExpandedDay(isOpen ? null : d.id)} style={{ background: done ? `${d.color}12` : "rgba(255,255,255,0.04)", border: `1.5px solid ${isOpen ? d.color : done ? `${d.color}40` : "rgba(255,255,255,0.08)"}`, borderRadius: 14, padding: 13, cursor: "pointer", marginBottom: 9, transition: "all 0.2s" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ fontSize: 8, fontWeight: 800, color: done ? d.color : C.muted, textTransform: "uppercase", letterSpacing: .5 }}>Day {d.id} · {d.isRecovery ? "Recovery" : "Finisher"}</div>
+              {done && <div style={{ fontSize: 10, color: d.color }}>✓ Complete</div>}
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>{d.label.replace(`Day ${d.id} — `, "")} {d.isRecovery ? "🌿" : "🔥"}</div>
+            <div style={{ fontSize: 9, color: C.sub }}>{d.focus}</div>
+            {isOpen && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+                {d.exercises.map(ex => (
+                  <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: 11 }}>
+                    <span style={{ color: "#d0c0e0" }}>{ex.name}</span>
+                    <span style={{ color: C.muted, fontSize: 10 }}>{ex.sets > 1 ? `${ex.sets}×${ex.reps}` : ex.reps}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function FitnessTracker() {
   const todayKey = getTodayKey();
   const weekKey = getWeekKey();
@@ -2280,12 +2407,7 @@ export default function FitnessTracker() {
                 <img src={photo.src} alt="inspo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: photo.pos, display: "block" }} />
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(to bottom, rgba(19,13,26,0.75) 0%, transparent 100%)" }} />
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 130, background: "linear-gradient(to top, rgba(19,13,26,1) 0%, rgba(19,13,26,0.6) 60%, transparent 100%)" }} />
-                {/* Day number bubbles top right */}
-                <div style={{ position: "absolute", top: 12, right: 14, display: "flex", gap: 6 }}>
-                  {DAYS.map(d => (
-                    <button key={d.id} onClick={() => setSelectedDay(d.id)} style={{ width: 24, height: 24, borderRadius: "50%", fontSize: 9, fontWeight: 800, cursor: "pointer", border: "none", background: selectedDay === d.id ? d.color : "rgba(0,0,0,0.45)", color: "#fff", backdropFilter: "blur(6px)", fontFamily: "inherit" }}>{d.id}</button>
-                  ))}
-                </div>
+
                 {/* Bottom info */}
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 16px 14px" }}>
                   <div style={{ fontSize: 9, fontWeight: 800, color: day.color, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>Day {selectedDay} · {day.focus}</div>
@@ -2306,7 +2428,7 @@ export default function FitnessTracker() {
             <div style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto" }}>
               {DAYS.map(d => (
                 <button key={d.id} onClick={() => setSelectedDay(d.id)} style={{ flexShrink: 0, padding: "7px 12px", borderRadius: 10, fontSize: 10, fontWeight: 700, cursor: "pointer", border: selectedDay === d.id ? `1.5px solid ${d.color}` : "1.5px solid rgba(255,255,255,0.08)", background: weeklyWorkouts[d.id] ? `${d.color}18` : selectedDay === d.id ? `${d.color}12` : "rgba(255,255,255,0.03)", color: selectedDay === d.id ? d.color : weeklyWorkouts[d.id] ? d.color : C.muted, fontFamily: "inherit" }}>
-                  {weeklyWorkouts[d.id] ? "✓ " : ""}{d.label.split(" ")[0]}
+                  {weeklyWorkouts[d.id] ? "✓" : d.id}
                 </button>
               ))}
             </div>
@@ -2406,152 +2528,12 @@ export default function FitnessTracker() {
         </div>
       )}
 
-      {/* ── WEIGHT TAB ── */}
-      {activeTab === "weight" && (() => {
-        const latest = weightLog.length > 0 ? parseFloat(weightLog[0].weight) : START_WEIGHT;
-        const lost = +(START_WEIGHT - latest).toFixed(1);
-        const remaining = +(latest - GOAL_WEIGHT).toFixed(1);
-        const pct = Math.min(100, Math.max(0, Math.round(((START_WEIGHT - latest) / (START_WEIGHT - GOAL_WEIGHT)) * 100)));
-        const td = calcTargetDate(latest);
-        const r = 38; const circ = 2 * Math.PI * r;
-        return (
-          <div style={{ padding: "16px 14px 24px" }}>
-            {/* 3-stat hero */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-              {[
-                { label: "Current", val: `${latest}`, unit: "lbs", color: "#e0c8f0" },
-                { label: "Lost", val: `${lost > 0 ? lost : 0}`, unit: "lbs", color: C.rose },
-                { label: "To go", val: `${remaining > 0 ? remaining : 0}`, unit: "lbs", color: C.amber },
-              ].map(s => (
-                <div key={s.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
-                  <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, marginBottom: 5 }}>{s.label}</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.val}</div>
-                  <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{s.unit}</div>
-                </div>
-              ))}
-            </div>
-            {/* Progress ring + date */}
-            <Card style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <svg width="96" height="96" viewBox="0 0 96 96" style={{ flexShrink: 0 }}>
-                <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8"/>
-                <circle cx="48" cy="48" r={r} fill="none" stroke={C.rose} strokeWidth="8"
-                  strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} strokeLinecap="round"
-                  transform="rotate(-90 48 48)"/>
-                <text x="48" y="44" textAnchor="middle" fontSize="16" fontWeight="800" fill="#e0c8f0">{pct}%</text>
-                <text x="48" y="57" textAnchor="middle" fontSize="9" fill={C.sub}>progress</text>
-              </svg>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#e0c8f0", marginBottom: 4 }}>Goal: {GOAL_WEIGHT} lbs</div>
-                {td ? <>
-                  <div style={{ fontSize: 10, color: C.sub, marginBottom: 2 }}>Estimated date</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.amber }}>{fmtDate(td)}</div>
-                  <div style={{ fontSize: 10, color: C.sub, marginTop: 2 }}>{weeksAway(td)}</div>
-                </> : <div style={{ fontSize: 10, color: C.sub }}>Log more weight to see estimate</div>}
-              </div>
-            </Card>
-            {/* Log weight */}
-            <Card>
-              <WeightSection weightLog={weightLog} setWeightLog={setWeightLog} />
-            </Card>
-            {/* Body measurements */}
-            <Card>
-              <SectionLabel>Body measurements</SectionLabel>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {Object.keys(measurements).map(key => (
-                  <div key={key}>
-                    <div style={{ fontSize: 9, color: C.sub, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>{key} (in)</div>
-                    <input
-                      type="number"
-                      value={measurements[key]}
-                      onChange={e => setMeasurements(p => ({ ...p, [key]: e.target.value }))}
-                      placeholder="—"
-                      style={{ width: "100%", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
-            <Card accent={C.plum}>
-              <SectionLabel>📸 Progress Photo Reminder</SectionLabel>
-              <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.7 }}>Every <span style={{ color: "#d0c0e0" }}>2–4 weeks</span> — same lighting, same pose, same time of day. The mirror lies. Photos reveal what the scale never will.</div>
-            </Card>
-          </div>
-        );
-      })()}
+      {activeTab === "weight" && <WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} />}
 
       {/* ── YOGA TAB ── */}
       {activeTab === "yoga" && <YogaTab />}
 
-      {/* ── PLAN TAB ── */}
-      {activeTab === "plan" && (() => {
-        const [expandedDay, setExpandedDay] = useState(null);
-        return (
-          <div style={{ padding: "16px 14px 24px" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 4 }}>Your Week 🏹</div>
-            <div style={{ fontSize: 10, color: C.sub, marginBottom: 16 }}>5-day strength + recovery plan · tap a day to see exercises</div>
-
-            {/* 2-col grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 9 }}>
-              {DAYS.slice(0, 4).map(d => {
-                const done = weeklyWorkouts[d.id];
-                const isOpen = expandedDay === d.id;
-                return (
-                  <div key={d.id} onClick={() => setExpandedDay(isOpen ? null : d.id)} style={{ background: done ? `${d.color}12` : "rgba(255,255,255,0.04)", border: `1.5px solid ${isOpen ? d.color : done ? `${d.color}40` : "rgba(255,255,255,0.08)"}`, borderRadius: 14, padding: 13, cursor: "pointer", transition: "all 0.2s" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                      <div style={{ fontSize: 8, fontWeight: 800, color: done ? d.color : C.muted, textTransform: "uppercase", letterSpacing: .5 }}>Day {d.id}</div>
-                      {done && <div style={{ fontSize: 10, color: d.color }}>✓</div>}
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 3 }}>{d.label.replace(`Day ${d.id} — `, "")}</div>
-                    <div style={{ fontSize: 9, color: C.sub, marginBottom: 8 }}>{d.focus}</div>
-                    <div style={{ display: "flex", gap: 3 }}>
-                      {d.exercises.slice(0, 5).map((_, i) => (
-                        <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: done ? d.color : "rgba(255,255,255,0.15)" }} />
-                      ))}
-                      {d.exercises.length > 5 && <div style={{ fontSize: 8, color: C.muted, marginLeft: 2 }}>+{d.exercises.length - 5}</div>}
-                    </div>
-                    {isOpen && (
-                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid rgba(255,255,255,0.06)` }}>
-                        {d.exercises.map(ex => (
-                          <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: 11 }}>
-                            <span style={{ color: "#d0c0e0" }}>{ex.name}</span>
-                            <span style={{ color: C.muted, fontSize: 10 }}>{ex.sets > 1 ? `${ex.sets}×${ex.reps}` : ex.reps}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Day 5 full width */}
-            {DAYS.slice(4).map(d => {
-              const done = weeklyWorkouts[d.id];
-              const isOpen = expandedDay === d.id;
-              return (
-                <div key={d.id} onClick={() => setExpandedDay(isOpen ? null : d.id)} style={{ background: done ? `${d.color}12` : "rgba(255,255,255,0.04)", border: `1.5px solid ${isOpen ? d.color : done ? `${d.color}40` : "rgba(255,255,255,0.08)"}`, borderRadius: 14, padding: 13, cursor: "pointer", marginBottom: 9, transition: "all 0.2s" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <div style={{ fontSize: 8, fontWeight: 800, color: done ? d.color : C.muted, textTransform: "uppercase", letterSpacing: .5 }}>Day {d.id} · {d.isRecovery ? "Recovery" : "Finisher"}</div>
-                    {done && <div style={{ fontSize: 10, color: d.color }}>✓ Complete</div>}
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>{d.label.replace(`Day ${d.id} — `, "")} {d.isRecovery ? "🌿" : "🔥"}</div>
-                  <div style={{ fontSize: 9, color: C.sub }}>{d.focus}</div>
-                  {isOpen && (
-                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid rgba(255,255,255,0.06)` }}>
-                      {d.exercises.map(ex => (
-                        <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: 11 }}>
-                          <span style={{ color: "#d0c0e0" }}>{ex.name}</span>
-                          <span style={{ color: C.muted, fontSize: 10 }}>{ex.sets > 1 ? `${ex.sets}×${ex.reps}` : ex.reps}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
+      {activeTab === "plan" && <PlanTab weeklyWorkouts={weeklyWorkouts} />}
     </div>
   );
 }
