@@ -2338,6 +2338,111 @@ function PlanTab({ weeklyWorkouts }) {
   );
 }
 
+function WorkoutTab({ selectedDay, setSelectedDay, checked, checkEx, weeklyWorkouts, markDayDone, day, pct, doneCount, exKeys }) {
+  const photo = DAY_PHOTOS[selectedDay];
+  return (
+    <div>
+      {/* Photo banner */}
+      {photo && (
+        <div style={{ position: "relative", height: 220, overflow: "hidden" }}>
+          <img src={photo.src} alt="inspo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: photo.pos, display: "block" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(to bottom, rgba(19,13,26,0.75) 0%, transparent 100%)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 130, background: "linear-gradient(to top, rgba(19,13,26,1) 0%, rgba(19,13,26,0.6) 60%, transparent 100%)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 16px 14px" }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: day.color, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>Day {selectedDay} · {day.focus}</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 8 }}>{day.label.replace(`Day ${selectedDay} — `, "")} {day.isRecovery ? "🌿" : "💪"}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: day.color }} />
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: day.color }}>{doneCount}/{exKeys.length} done</div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div style={{ padding: "14px 14px" }}>
+        {/* Day strip */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto" }}>
+          {DAYS.map(d => (
+            <button key={d.id} onClick={() => setSelectedDay(d.id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 10, fontSize: 10, fontWeight: 700, cursor: "pointer", border: selectedDay === d.id ? `1.5px solid ${d.color}` : "1.5px solid rgba(255,255,255,0.08)", background: weeklyWorkouts[d.id] ? `${d.color}18` : selectedDay === d.id ? `${d.color}12` : "rgba(255,255,255,0.03)", color: selectedDay === d.id ? d.color : weeklyWorkouts[d.id] ? d.color : C.muted, fontFamily: "inherit" }}>
+              {weeklyWorkouts[d.id] ? "✓" : d.id}
+            </button>
+          ))}
+        </div>
+        {/* Exercise cards */}
+        {day.exercises.map(ex => {
+          const key = `${selectedDay}-${ex.id}`;
+          const done = !!checked[key];
+          return (
+            <div key={ex.id} style={{ background: done ? "rgba(169,191,83,0.06)" : "rgba(255,255,255,0.04)", border: `1px solid ${done ? "rgba(169,191,83,0.25)" : C.border}`, borderRadius: 13, padding: "12px 13px", marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: done ? "rgba(169,191,83,0.15)" : `${day.color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{done ? "✓" : "🏋️"}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: done ? C.sub : C.text, textDecoration: done ? "line-through" : "none" }}>{ex.name}</div>
+                  <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{ex.sets > 1 ? `${ex.sets} sets × ${ex.reps}` : ex.reps}{ex.weight ? ` · ${ex.weight}` : ""}</div>
+                </div>
+                <button onClick={() => checkEx(key, !done)} style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${done ? "rgba(169,191,83,0.5)" : "rgba(255,255,255,0.15)"}`, background: done ? "rgba(169,191,83,0.18)" : "transparent", color: done ? C.dotGreen : C.muted, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "inherit" }}>{done ? "✓" : "○"}</button>
+              </div>
+              {ex.sets > 1 && !done && (
+                <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "center" }}>
+                  <div style={{ fontSize: 9, color: C.sub, marginRight: 2 }}>Sets:</div>
+                  {Array.from({ length: ex.sets }).map((_, i) => (
+                    <div key={i} style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,0.05)", border: `1px solid rgba(255,255,255,0.12)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: C.muted, fontWeight: 700 }}>{i + 1}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {pct === 100 && !weeklyWorkouts[selectedDay] && (
+          <button onClick={markDayDone} style={{ width: "100%", marginTop: 6, padding: 12, borderRadius: 12, border: "none", background: `linear-gradient(135deg, ${day.color}, #A07CC0)`, color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>🔥 Mark Day {selectedDay} Complete</button>
+        )}
+        {weeklyWorkouts[selectedDay] && (
+          <div style={{ textAlign: "center", color: day.color, fontSize: 12, fontWeight: 700, padding: "12px 0" }}>✓ Day {selectedDay} logged this week!</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NutritionTab({ foodLog, setFoodLog, foodTotals, junkDelay }) {
+  return (
+    <div style={{ padding: "14px 14px 24px" }}>
+      {/* Macro rings */}
+      <Card>
+        <SectionLabel>Today's nutrition</SectionLabel>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {[
+            { label: "🥩 Protein", val: foodTotals.protein, goal: PROTEIN_GOAL, unit: "g", color: C.sage },
+            { label: "🔥 Calories", val: foodTotals.calories, goal: CALORIE_GOAL, unit: "", color: C.amber },
+            { label: "🫙 Carbs", val: foodTotals.carbs || 0, goal: 150, unit: "g", color: C.plum },
+            { label: "🫒 Fat", val: foodTotals.fat || 0, goal: 55, unit: "g", color: "#8B7CC0" },
+          ].map(({ label, val, goal, unit, color }) => (
+            <div key={label} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, marginBottom: 5 }}>{label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color }}>{val}<span style={{ fontSize: 10, color: C.sub, fontWeight: 400 }}>{unit}</span></div>
+              <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.07)", margin: "6px 0 3px", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${Math.min(100, Math.round((val/goal)*100))}%`, background: color, borderRadius: 2 }} />
+              </div>
+              <div style={{ fontSize: 9, color: C.sub }}>{Math.min(100, Math.round((val/goal)*100))}% of {goal}{unit}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {junkDelay > 0 && (
+        <Card accent={C.amber}>
+          <div style={{ fontSize: 12, color: C.amber, fontWeight: 700, marginBottom: 4 }}>⚠️ Junk food impact</div>
+          <div style={{ fontSize: 11, color: C.sub }}>Today's junk food adds ~{junkDelay} days to your goal date.</div>
+        </Card>
+      )}
+
+      {/* Food logger */}
+      <FoodLogger foodLog={foodLog} setFoodLog={setFoodLog} />
+    </div>
+  );
+}
+
 export default function FitnessTracker() {
   const todayKey = getTodayKey();
   const weekKey = getWeekKey();
@@ -2499,6 +2604,8 @@ export default function FitnessTracker() {
         {activeTab === "weight" && <WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} />}
         {activeTab === "yoga" && <YogaTab markTodayDots={markTodayDots} />}
         {activeTab === "plan" && <PlanTab weeklyWorkouts={weeklyWorkouts} />}
+        {activeTab === "today" && <WorkoutTab selectedDay={selectedDay} setSelectedDay={setSelectedDay} checked={checked} checkEx={checkEx} weeklyWorkouts={weeklyWorkouts} markDayDone={markDayDone} day={day} pct={pct} doneCount={doneCount} exKeys={exKeys} />}
+        {activeTab === "nutrition" && <NutritionTab foodLog={foodLog} setFoodLog={setFoodLog} foodTotals={foodTotals} junkDelay={junkDelay} />}
         
       </div>
 
