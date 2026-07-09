@@ -5,8 +5,8 @@ const START_WEIGHT = 150;
 const GOAL_WEIGHT = 135;
 const PROTEIN_GOAL = 115;
 const WATER_GOAL_OZ = 80;
-const STEPS_GOAL = 9000;
-const CALORIE_GOAL = 1600;
+const STEPS_GOAL = 10000;
+const CALORIE_GOAL = 1500;
 const SLEEP_GOAL_HRS = 8;
 
 const C = {
@@ -658,6 +658,8 @@ const YOGA_SECTIONS = [
       { name: "Thoracic Extension on Foam Roller", duration: "2–3 min", steps: ["Foam roller horizontally across mid-back (bra strap area).", "Support head with hands, elbows pointed forward.", "Gently extend backward over the roller. Breathe into it.", "Slowly roll through mid-back (avoid lower back)."], caution: "Keep core engaged. Never force the extension." },
       { name: "Wall Angels", duration: "3 × 10 reps", steps: ["Back flat against wall, arms in goalpost position.", "Slowly slide arms overhead keeping contact with wall.", "If arms lift off, only go as high as you maintain contact.", "3 sec up, 3 sec down."], caution: "Directly retrains scapular control and posture." },
       { name: "Chin Tucks", duration: "3 × 10 reps", steps: ["Sit or stand tall.", "Gently pull chin straight back (making a 'double chin').", "Hold 3–5 seconds, then release.", "You should feel a stretch at the base of your skull."], caution: "The #1 fix for forward head posture from desk work." },
+      { name: "Shoulder Blade Squeeze", duration: "3 × 12 reps", steps: ["Sit or stand with arms relaxed at sides.", "Squeeze shoulder blades together, imagine holding a pencil between them.", "Hold 3 seconds, release slowly.", "Keeps shoulders from rounding forward."], caution: "Avoid shrugging shoulders up while squeezing." },
+      { name: "Cervical Side Bend Stretch", duration: "45 sec each side", steps: ["Sit tall, one hand resting on top of head.", "Gently pull head toward that shoulder.", "Feel stretch along opposite side of neck.", "Breathe steadily, don't pull hard."], caution: "Very gentle — this is a nerve-sensitive area." },
     ],
   },
   {
@@ -667,6 +669,8 @@ const YOGA_SECTIONS = [
       { name: "Neck & Collarbone Drain", duration: "2 min", steps: ["With fingertips, gently stroke downward from behind each ear to your collarbone.", "Light, rhythmic strokes — about 1 per second.", "Do 15–20 strokes each side.", "This clears the primary lymph drainage pathway."], caution: "Should feel like a gentle skin stretch, not a deep massage." },
       { name: "Arm Lymph Flow", duration: "2 min each arm", steps: ["Start at armpit — gentle circular strokes there for 30 sec.", "Move to upper arm, stroke toward the armpit (always upward).", "Continue down forearm to hand, always stroking toward armpit.", "Finish with light strokes at the inner elbow."], caution: "Always stroke toward the heart, never away." },
       { name: "Diaphragmatic Breathing", duration: "3 min", steps: ["Lie on back, one hand on chest, one on belly.", "Inhale through nose for 4 counts — belly rises, not chest.", "Exhale through mouth for 6 counts. Belly falls.", "Diaphragm movement pumps lymph through the thoracic duct."], caution: "The most powerful lymph mover in the body." },
+      { name: "Vibration Plate", duration: "5–10 min", steps: ["Stand on vibration plate with soft knees.", "Start on lowest intensity setting.", "Let the vibration move through legs and hips — don't tense up.", "Gentle vibration stimulates lymph flow and circulation throughout the body."], caution: "Skip if pregnant, have a pacemaker, or recent injury. Start low and short." },
+      { name: "Dry Brushing", duration: "3–5 min", steps: ["Use a natural bristle brush on dry skin before showering.", "Always brush toward the heart in long strokes.", "Start at feet, move up legs, then arms toward chest.", "Light pressure only — skin should turn slightly pink, not red."], caution: "Never brush over broken skin, rashes, or varicose veins." },
     ],
   },
   {
@@ -677,6 +681,18 @@ const YOGA_SECTIONS = [
       { name: "Low Lunge to Half Split", duration: "90 sec each side", steps: ["From lunge, drop back knee to ground.", "Shift hips back over rear knee — extend front leg into half split.", "Hold the lunge 30 sec, then shift back 30 sec, alternate 3x."], caution: "Keep front knee over ankle." },
       { name: "Pigeon Pose", duration: "2 min each side", steps: ["From downward dog, bring one knee toward same-side wrist.", "Shin at an angle, back leg fully extended.", "Slowly fold forward over front shin.", "Breathe into the outer hip."], caution: "If knee is uncomfortable, use a blanket under the hip." },
       { name: "Supine Spinal Twist", duration: "90 sec each side", steps: ["Lie on back, pull one knee to chest.", "Let it fall across the body — extend arm out opposite side.", "Gaze away from the knee.", "Releases thoracic and lumbar spine."], caution: "Both shoulders stay on the floor." },
+      { name: "Sun Salutation Flow", duration: "3 rounds", steps: ["Reach arms overhead, fold forward to touch toes.", "Step back to plank, lower to the ground.", "Press up to upward dog, then downward dog.", "Step forward, rise back to standing."], caution: "Move slowly through each transition, breathe with the movement." },
+      { name: "Standing Forward Fold", duration: "60 sec", steps: ["Stand with feet hip-width apart.", "Hinge at hips, fold forward, let arms hang.", "Bend knees slightly if hamstrings are tight.", "Let head and neck relax completely."], caution: "Great blood flow booster to start the day." },
+    ],
+  },
+  {
+    id: "evening", label: "Evening Wind-down", color: "#A07CC0", emoji: "🌙",
+    intro: "10-15 minute gentle flow before bed. Calms the nervous system, releases tension from the day, and prepares your body for restful sleep.",
+    sequences: [
+      { name: "Legs Up The Wall", duration: "5 min", steps: ["Sit sideways next to a wall, then swing legs up as you lie back.", "Scoot hips close to the wall, legs resting vertically.", "Arms relaxed at sides, palms up.", "Close eyes and breathe slowly."], caution: "Excellent for circulation and calming the nervous system before bed." },
+      { name: "Child's Pose", duration: "2 min", steps: ["Kneel and sit back on heels.", "Fold forward, arms extended or resting alongside body.", "Forehead rests on the mat.", "Breathe deeply into your back."], caution: "Use a pillow under hips if uncomfortable on knees." },
+      { name: "Reclined Butterfly", duration: "3 min", steps: ["Lie on back, bring soles of feet together.", "Let knees fall open to each side.", "Place hands on belly or let arms rest out to sides.", "Breathe slowly, let gravity do the work."], caution: "Place pillows under knees for support if needed." },
+      { name: "Body Scan Relaxation", duration: "5 min", steps: ["Lie flat on back, arms at sides.", "Starting at your toes, consciously relax each body part moving upward.", "Notice tension and let it release with each exhale.", "Finish at the crown of your head."], caution: "Great for winding down mentally before sleep." },
     ],
   },
   {
@@ -1254,6 +1270,11 @@ function YogaTab({ markTodayDots }) {
     const updated = { ...completed, [key]: !completed[key] };
     setCompleted(updated);
     saveS(`yoga-${todayKey}`, updated);
+    // Count total poses done today across ALL sections for streak purposes
+    const totalDoneToday = Object.values(updated).filter(Boolean).length;
+    if (totalDoneToday >= 5) {
+      markTodayDots && markTodayDots({ yoga: true });
+    }
   };
 
   const doneCount = section ? section.sequences.filter((_, i) => completed[`${activeSection}-${i}`]).length : 0;
@@ -1336,16 +1357,20 @@ function YogaTab({ markTodayDots }) {
                   <div style={{ fontSize: 11, color: C.amber, background: `${C.amber}12`, borderRadius: 8, padding: "7px 10px", lineHeight: 1.5, marginBottom: 10 }}>⚠ {seq.caution}</div>
                 )}
                 {/* Timer */}
-                <div style={{ display: "flex", gap: 7 }}>
-                  {isTimerRunning ? (
-                    <div style={{ flex: 1, padding: "8px 12px", borderRadius: 9, background: `${section.color}18`, border: `1px solid ${section.color}40`, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: section.color, fontVariantNumeric: "tabular-nums" }}>{Math.floor(timerSec/60)}:{String(timerSec%60).padStart(2,"0")}</div>
-                      <button onClick={() => setTimerActive(null)} style={{ fontSize: 10, color: C.muted, background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>Stop</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => startTimer(30, key)} style={{ flex: 1, padding: "8px 10px", borderRadius: 9, border: `1px solid ${section.color}40`, background: `${section.color}12`, color: section.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>▶ Start 30s timer</button>
-                  )}
-                  <button onClick={() => toggle(key)} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid rgba(169,191,83,0.3)", background: "rgba(169,191,83,0.1)", color: C.dotGreen, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{done ? "Undo" : "✓ Done"}</button>
+                {isTimerRunning ? (
+                  <div style={{ padding: "10px 12px", borderRadius: 9, background: `${section.color}18`, border: `1px solid ${section.color}40`, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 7 }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: section.color, fontVariantNumeric: "tabular-nums" }}>{Math.floor(timerSec/60)}:{String(timerSec%60).padStart(2,"0")}</div>
+                    <button onClick={() => setTimerActive(null)} style={{ fontSize: 10, color: C.muted, background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit" }}>Stop</button>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: 6, marginBottom: 7 }}>
+                    {[30, 60, 90].map(secs => (
+                      <button key={secs} onClick={() => startTimer(secs, key)} style={{ flex: 1, padding: "8px 4px", borderRadius: 9, border: `1px solid ${section.color}40`, background: `${section.color}12`, color: section.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>▶ {secs}s</button>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: "flex" }}>
+                  <button onClick={() => toggle(key)} style={{ width: "100%", padding: "8px 14px", borderRadius: 9, border: "1px solid rgba(169,191,83,0.3)", background: "rgba(169,191,83,0.1)", color: C.dotGreen, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{done ? "Undo" : "✓ Done"}</button>
                 </div>
               </div>
             )}
@@ -1401,6 +1426,7 @@ function YogaTab({ markTodayDots }) {
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStats, weightLog, setActiveTab }) {
   const [slide, setSlide] = useState(0);
+  const [weather, setWeather] = useState(null);
   const CAROUSEL = [
     { src: "/images/IMG_7875.jpeg", pos: "center 40%", quote: '"She is fierce. She is strong. She is her own goal."' },
     { src: "/images/IMG_7872.jpeg", pos: "center 20%", quote: '"Every rep brings you closer to her."' },
@@ -1413,14 +1439,63 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
     const t = setInterval(() => setSlide(s => (s + 1) % CAROUSEL.length), 3800);
     return () => clearInterval(t);
   }, []);
+
+  // Fetch weather via free Open-Meteo API using device location
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`);
+        const data = await res.json();
+        if (data.current) {
+          setWeather({ temp: Math.round(data.current.temperature_2m), code: data.current.weather_code });
+        }
+      } catch {}
+    }, () => {}, { timeout: 3000 });
+  }, []);
+
   const latest = weightLog.length > 0 ? parseFloat(weightLog[0].weight) : START_WEIGHT;
   const remaining = +(latest - GOAL_WEIGHT).toFixed(1);
   const pct = Math.min(100, Math.max(0, Math.round(((START_WEIGHT - latest) / (START_WEIGHT - GOAL_WEIGHT)) * 100)));
   const td = calcTargetDate(latest);
-  const streak = (() => { let s=0; const today=new Date(); for(let i=0;i<90;i++){const d=new Date(today); d.setDate(d.getDate()-i); const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; if(weeklyHistory[k]?.workout||weeklyHistory[k]?.yoga) s++; else if(i>0) break;} return s; })();
+
+  const workoutsDone = Object.values(weeklyWorkouts).filter(Boolean).length;
+  const now = new Date();
+  const hour = now.getHours();
+  const dayOfWeek = now.getDay(); // 0 = Sun
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  const isWeatherGood = weather && weather.code <= 3 && weather.temp >= 55 && weather.temp <= 85;
+  const isHot = weather && weather.temp >= 85;
+  const isCold = weather && weather.temp <= 40;
+  const isRainy = weather && weather.code >= 51 && weather.code <= 82;
+
+  // Build prioritized nudge list, pick best 1-2
+  const nudges = [];
+  if (workoutsDone >= 5) nudges.push({ p: 10, msg: "You've hit all 5 workouts this week — incredible consistency 🔥" });
+  else if (workoutsDone > 0 && workoutsDone < 5) nudges.push({ p: 6, msg: `You've hit ${workoutsDone}/5 workouts this week — keep the momentum going 💪` });
+  else if (workoutsDone === 0 && dayOfWeek >= 2) nudges.push({ p: 8, msg: "No workouts logged yet this week — today's a great day to start 🎀" });
+
+  if (waterOz < 30 && hour >= 14) nudges.push({ p: 9, msg: `You're only at ${waterOz}oz of water — let's catch up 💧` });
+  else if (waterOz >= WATER_GOAL_OZ) nudges.push({ p: 4, msg: "Water goal hit for today — amazing 💙" });
+
+  if (dailyStats.steps < 3000 && hour >= 15) nudges.push({ p: 7, msg: "Steps are low today — a short walk could help hit your goal 👟" });
+
+  if (isWeatherGood && dailyStats.steps < STEPS_GOAL) nudges.push({ p: 8, msg: `It's ${weather.temp}° and clear outside — perfect for a walk or hike ☀️` });
+  if (isHot) nudges.push({ p: 7, msg: `It's ${weather.temp}° today — drink extra water and take it easy outside 🌡️` });
+  if (isRainy) nudges.push({ p: 5, msg: "Rainy day — perfect excuse to stay in and crush your workout ☔" });
+  if (isCold) nudges.push({ p: 5, msg: `It's ${weather.temp}° out there — bundle up if you're heading outside 🧣` });
+
+  if (isWeekend) nudges.push({ p: 3, msg: "Weekend recovery — stretch, hydrate, and refuel 🌿" });
+
+  nudges.sort((a, b) => b.p - a.p);
+  const topNudges = nudges.slice(0, 2);
+
   return (
     <div>
-      <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: 380, overflow: "hidden" }}>
         {CAROUSEL.map((s, i) => (
           <div key={i} style={{ position: "absolute", inset: 0, opacity: i === slide ? 1 : 0, transition: "opacity 1.1s ease" }}>
             <img src={s.src} alt="inspo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: s.pos, display: "block" }} />
@@ -1437,34 +1512,42 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
           </div>
         ))}
       </div>
-      <div style={{ padding: "14px 14px 20px" }}>
-        <Card>
-          <SectionLabel>Today at a glance</SectionLabel>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      <div style={{ padding: "16px 16px 20px" }}>
+
+        {/* Greeting + nudges */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 2 }}>
+            {timeGreeting} {weather ? `· ${weather.temp}°` : ""}
+          </div>
+          <div style={{ fontSize: 11, color: C.sub }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
+        </div>
+        {topNudges.map((n, i) => (
+          <div key={i} style={{ background: "rgba(192,132,160,0.08)", border: `1px solid rgba(192,132,160,0.2)`, borderRadius: 12, padding: "11px 14px", marginBottom: 9 }}>
+            <div style={{ fontSize: 12, color: "#e8c0d8", fontWeight: 600, lineHeight: 1.5 }}>{n.msg}</div>
+          </div>
+        ))}
+
+        {/* Today's stats */}
+        <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.sub, marginBottom: 12 }}>Today's snapshot</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
-              { label: "day streak 🔥", val: streak, color: C.dotPurple, bg: "rgba(223,132,189,0.08)", border: "rgba(223,132,189,0.22)" },
-              { label: "workouts 💪", val: `${Object.values(weeklyWorkouts).filter(Boolean).length}/5`, color: C.dotPink, bg: "rgba(255,112,166,0.08)", border: "rgba(255,112,166,0.22)" },
-            ].map(({label,val,color,bg,border}) => (
-              <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: 10, textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color }}>{val}</div>
-                <div style={{ fontSize: 9, color: C.sub, marginTop: 2, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5 }}>{label}</div>
-              </div>
-            ))}
-            {[
-              { label: "🔥 Calories", val: foodTotals.calories, goal: CALORIE_GOAL, unit: "", color: C.amber, bg: "rgba(232,130,154,0.08)", border: "rgba(232,130,154,0.22)" },
-              { label: "💧 Water", val: waterOz, goal: WATER_GOAL_OZ, unit: " oz", color: C.dotBlue, bg: "rgba(107,230,247,0.08)", border: "rgba(107,230,247,0.22)" },
-            ].map(({label,val,goal,unit,color,bg,border}) => (
-              <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: 10 }}>
-                <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>{val}{unit}<span style={{ fontSize: 9, color: C.sub, fontWeight: 400 }}> / {goal}{unit}</span></div>
-                <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${Math.min(100, Math.round((Number(val)/goal)*100))}%`, background: color, borderRadius: 2 }} />
-                </div>
+              { label: "Workouts", val: `${workoutsDone}/5`, goal: null, color: C.dotPink, bg: "rgba(255,112,166,0.08)" },
+              { label: "Calories", val: foodTotals.calories, goal: CALORIE_GOAL, unit: "", color: C.amber, bg: "rgba(232,130,154,0.08)" },
+              { label: "Water", val: waterOz, goal: WATER_GOAL_OZ, unit: "oz", color: C.dotBlue, bg: "rgba(107,230,247,0.08)" },
+              { label: "Protein", val: foodTotals.protein, goal: PROTEIN_GOAL, unit: "g", color: C.sage, bg: "rgba(123,191,160,0.08)" },
+            ].map(({ label, val, goal, unit, color, bg }) => (
+              <div key={label} style={{ background: bg, borderRadius: 12, padding: "12px 13px" }}>
+                <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, marginBottom: 6 }}>{label}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>{val}<span style={{ fontSize: 11, color: C.sub, fontWeight: 500 }}>{unit}</span></div>
+                {goal && <div style={{ fontSize: 9, color: C.sub, marginTop: 4 }}>of {goal}{unit}</div>}
               </div>
             ))}
           </div>
-        </Card>
-        <Card style={{ display: "flex", gap: 13, alignItems: "center" }}>
+        </div>
+
+        {/* Weight progress */}
+        <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, marginBottom: 12, display: "flex", gap: 14, alignItems: "center" }}>
           <svg width="64" height="64" viewBox="0 0 64 64" style={{ flexShrink: 0 }}>
             <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6"/>
             <circle cx="32" cy="32" r="26" fill="none" stroke={C.rose} strokeWidth="6"
@@ -1474,44 +1557,31 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
             <text x="32" y="40" textAnchor="middle" fontSize="7" fill={C.sub}>there</text>
           </svg>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 3 }}>{latest} → {GOAL_WEIGHT} lbs 💜</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>{latest} → {GOAL_WEIGHT} lbs 💜</div>
             <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.75 }}>
               {remaining > 0 ? `${remaining} lbs to go` : "Goal reached! 🎉"}<br/>
               {td && <span style={{ color: C.amber, fontWeight: 700 }}>Est. {fmtDate(td)}</span>}
               {td && <span style={{ color: C.sub }}> · {weeksAway(td)}</span>}
             </div>
           </div>
-        </Card>
-        <Card>
-          <SectionLabel>Quick log</SectionLabel>
-          <div style={{ display: "flex", gap: 7 }}>
+        </div>
+
+        {/* Quick log */}
+        <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 16, padding: 16 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.sub, marginBottom: 12 }}>Quick log</div>
+          <div style={{ display: "flex", gap: 8 }}>
             {[
               { emoji: "⚖️", label: "Weight", color: C.rose, bg: "rgba(192,132,160,0.12)", tab: "weight" },
               { emoji: "🥗", label: "Food", color: C.sage, bg: "rgba(123,191,160,0.12)", tab: "nutrition" },
               { emoji: "💧", label: "Water", color: C.dotBlue, bg: "rgba(107,230,247,0.12)", tab: "habits" },
               { emoji: "😴", label: "Sleep", color: C.plum, bg: "rgba(160,124,192,0.12)", tab: "habits" },
             ].map(q => (
-              <button key={q.label} onClick={() => setActiveTab(q.tab)} style={{ flex: 1, padding: "11px 4px", borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: q.bg, color: q.color, fontFamily: "inherit" }}>
-                <span style={{ fontSize: 18 }}>{q.emoji}</span>
+              <button key={q.label} onClick={() => setActiveTab(q.tab)} style={{ flex: 1, padding: "12px 4px", borderRadius: 12, fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, background: q.bg, color: q.color, fontFamily: "inherit" }}>
+                <span style={{ fontSize: 19 }}>{q.emoji}</span>
                 <span>{q.label}</span>
               </button>
             ))}
           </div>
-        </Card>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {[
-            { label: "🥩 Protein", val: foodTotals.protein, goal: PROTEIN_GOAL, unit: "g", color: C.sage },
-            { label: "😴 Sleep", val: dailyStats.sleep, goal: SLEEP_GOAL_HRS, unit: "hrs", color: C.plum },
-          ].map(({ label, val, goal, unit, color }) => (
-            <Card key={label} style={{ marginBottom: 0, textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: C.sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, marginBottom: 6 }}>{label}</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color }}>{val}<span style={{ fontSize: 10, color: C.sub, fontWeight: 400 }}>{unit}</span></div>
-              <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.07)", margin: "6px 0 4px", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.min(100, Math.round((val/goal)*100))}%`, background: color, borderRadius: 2 }} />
-              </div>
-              <div style={{ fontSize: 9, color: C.sub }}>{Math.round((val/goal)*100)}% · goal {goal}{unit}</div>
-            </Card>
-          ))}
         </div>
       </div>
     </div>
@@ -1528,6 +1598,23 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
     if (h?.workout || h?.yoga) streak++;
     else if (i > 0) break;
   }
+  // Individual category streaks
+  const calcCategoryStreak = (field) => {
+    let s = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const h = weeklyHistory[k];
+      if (h?.[field]) s++; else if (i > 0) break;
+    }
+    return s;
+  };
+  const workoutStreak = calcCategoryStreak("workout");
+  const yogaStreak = calcCategoryStreak("yoga");
+  const thatGirlStreak = calcCategoryStreak("thatGirl");
+  // No fast food streak — a day counts if noJunk flag is explicitly set true
+  const noFastFoodStreak = calcCategoryStreak("noJunk");
+
   let bestStreak = 0, cur = 0;
   const allDays = Object.keys(weeklyHistory).sort();
   for (const k of allDays) {
@@ -1574,6 +1661,22 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
           </div>}
         </div>
       </Card>
+
+      {/* Per-category streak bubbles */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        {[
+          { val: workoutStreak, label: "💪 Workout", color: C.dotPink },
+          { val: yogaStreak, label: "🧘 Yoga", color: C.dotGreen },
+          { val: noFastFoodStreak, label: "🍔 No fast food", color: C.amber },
+          { val: thatGirlStreak, label: "✨ That Girl", color: C.dotPurple },
+        ].map(b => (
+          <div key={b.label} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: b.color }}>{b.val}</div>
+            <div style={{ fontSize: 8, color: C.sub, marginTop: 2, fontWeight: 700 }}>{b.label}</div>
+          </div>
+        ))}
+      </div>
+
       <Card>
         <SectionLabel>{monthNames[month]} {year}</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center", marginBottom: 5 }}>
@@ -1867,13 +1970,13 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
                     <div style={{ fontSize: 12, fontWeight: 600, color: habitsDone[h.id] ? C.sub : C.text, textDecoration: habitsDone[h.id] ? "line-through" : "none" }}>{h.name}</div>
                     <div style={{ fontSize: 9, color: C.sub, marginTop: 1 }}>🔥 {h.streak} day streak</div>
                   </div>
-                  <button onClick={() => {
+                  <button className="check-anim" onClick={() => {
                     const newDone = !habitsDone[h.id];
                     setHabitsDone(p => ({ ...p, [h.id]: newDone }));
                     if (newDone) {
                       setHabits(prev => prev.map(x => x.id === h.id ? { ...x, streak: (x.streak || 0) + 1, lastDone: todayKey } : x));
                     }
-                  }} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${habitsDone[h.id] ? C.dotGreen : "rgba(255,255,255,0.18)"}`, background: habitsDone[h.id] ? "rgba(169,191,83,0.2)" : "transparent", color: C.dotGreen, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{habitsDone[h.id] ? "✓" : ""}</button>
+                  }} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${habitsDone[h.id] ? C.dotGreen : "rgba(255,255,255,0.18)"}`, background: habitsDone[h.id] ? "rgba(169,191,83,0.2)" : "transparent", color: C.dotGreen, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "transform 0.15s, background 0.15s" }}>{habitsDone[h.id] ? "✓" : ""}</button>
                   <button onClick={() => setEditSheet(h.id)} style={{ fontSize: 14, color: C.muted, background: "none", border: "none", cursor: "pointer", padding: "0 2px", flexShrink: 0 }}>···</button>
                 </div>
               ))}
@@ -2381,7 +2484,7 @@ function WorkoutTab({ selectedDay, setSelectedDay, checked, checkEx, weeklyWorko
                   <div style={{ fontSize: 13, fontWeight: 700, color: done ? C.sub : C.text, textDecoration: done ? "line-through" : "none" }}>{ex.name}</div>
                   <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{ex.sets > 1 ? `${ex.sets} sets × ${ex.reps}` : ex.reps}{ex.weight ? ` · ${ex.weight}` : ""}</div>
                 </div>
-                <button onClick={() => checkEx(key, !done)} style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${done ? "rgba(169,191,83,0.5)" : "rgba(255,255,255,0.15)"}`, background: done ? "rgba(169,191,83,0.18)" : "transparent", color: done ? C.dotGreen : C.muted, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "inherit" }}>{done ? "✓" : "○"}</button>
+                <button className="check-anim" onClick={() => checkEx(key, !done)} style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${done ? "rgba(169,191,83,0.5)" : "rgba(255,255,255,0.15)"}`, background: done ? "rgba(169,191,83,0.18)" : "transparent", color: done ? C.dotGreen : C.muted, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "inherit", transition: "transform 0.15s, background 0.15s" }}>{done ? "✓" : "○"}</button>
               </div>
               {ex.sets > 1 && !done && (
                 <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "center" }}>
@@ -2405,7 +2508,13 @@ function WorkoutTab({ selectedDay, setSelectedDay, checked, checkEx, weeklyWorko
   );
 }
 
-function NutritionTab({ foodLog, setFoodLog, foodTotals, junkDelay }) {
+function NutritionTab({ foodLog, setFoodLog, foodTotals, junkDelay, markTodayDots }) {
+  const hasJunkToday = foodLog.some(f => f.category === "junk");
+  useEffect(() => {
+    if (foodLog.length > 0) {
+      markTodayDots && markTodayDots({ noJunk: !hasJunkToday, nutrition: true });
+    }
+  }, [foodLog]);
   return (
     <div style={{ padding: "14px 14px 24px" }}>
       {/* Macro rings */}
@@ -2555,7 +2664,6 @@ export default function FitnessTracker() {
     { k: "streak", emoji: "✴️", label: "Streak" },
   ];
   const MORE_TABS = [
-    { k: "plan", emoji: "🏹", label: "Plan" },
     { k: "weight", emoji: "🫧", label: "Weight" },
     { k: "yoga", emoji: "🪷", label: "Yoga" },
   ];
@@ -2603,9 +2711,9 @@ export default function FitnessTracker() {
         {activeTab === "habits" && <HabitsTab waterTaps={waterTaps} setWaterTaps={setWaterTaps} dailyStats={dailyStats} setDailyStats={setDailyStats} habits={habits} setHabits={setHabits} habitsDone={habitsDone} setHabitsDone={setHabitsDone} cycleLog={cycleLog} setCycleLog={setCycleLog} suppRoutineWeek={suppRoutineWeek} setSuppRoutineWeek={setSuppRoutineWeek} suppRoutineComplete={suppRoutineComplete} setSuppRoutineComplete={setSuppRoutineComplete} customSupps={customSupps} setCustomSupps={setCustomSupps} customSuppsDone={customSuppsDone} setCustomSuppsDone={setCustomSuppsDone} />}
         {activeTab === "weight" && <WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} />}
         {activeTab === "yoga" && <YogaTab markTodayDots={markTodayDots} />}
-        {activeTab === "plan" && <PlanTab weeklyWorkouts={weeklyWorkouts} />}
+
         {activeTab === "today" && <WorkoutTab selectedDay={selectedDay} setSelectedDay={setSelectedDay} checked={checked} checkEx={checkEx} weeklyWorkouts={weeklyWorkouts} markDayDone={markDayDone} day={day} pct={pct} doneCount={doneCount} exKeys={exKeys} />}
-        {activeTab === "nutrition" && <NutritionTab foodLog={foodLog} setFoodLog={setFoodLog} foodTotals={foodTotals} junkDelay={junkDelay} />}
+        {activeTab === "nutrition" && <NutritionTab foodLog={foodLog} setFoodLog={setFoodLog} foodTotals={foodTotals} junkDelay={junkDelay} markTodayDots={markTodayDots} />}
         
       </div>
 
