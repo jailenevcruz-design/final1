@@ -19,9 +19,9 @@ const C = {
   sage: "#7A8A3A",
   amber: "#C77A9A",      // coral pink (was orange)
   crimson: "#C07080",
-  muted: "#c9a0b0",
+  muted: "#a87890",
   text: "#4a3a3f",
-  sub: "#b89aa8",        // lighter lavender
+  sub: "#8a5167",        // lighter lavender
   inputBg: "#FFF5F8",
   // activity dot palette
   dotPink: "#D4577C",    // workout
