@@ -10,24 +10,24 @@ const CALORIE_GOAL = 1500;
 const SLEEP_GOAL_HRS = 8;
 
 const C = {
-  bg: "#130d1a",
-  surface: "rgba(255,255,255,0.04)",
-  surfaceHover: "rgba(255,255,255,0.07)",
-  border: "rgba(192,132,160,0.13)",
-  rose: "#C084A0",
-  plum: "#A07CC0",
-  sage: "#7BBFA0",
-  amber: "#E8829A",      // coral pink (was orange)
+  bg: "#FFF9FB",
+  surface: "#FFFAFC",
+  surfaceHover: "#FFF0F5",
+  border: "#f5dae5",
+  rose: "#D4577C",
+  plum: "#B03D68",
+  sage: "#7A8A3A",
+  amber: "#C77A9A",      // coral pink (was orange)
   crimson: "#C07080",
-  muted: "#7a5a8a",
-  text: "#f0e8f5",
-  sub: "#c9a8e0",        // lighter lavender
-  inputBg: "rgba(255,255,255,0.06)",
+  muted: "#c9a0b0",
+  text: "#4a3a3f",
+  sub: "#b89aa8",        // lighter lavender
+  inputBg: "#FFF5F8",
   // activity dot palette
-  dotPink: "#FF70A6",    // workout
-  dotGreen: "#a9bf53",   // yoga/recovery
-  dotBlue: "#6be6f7",    // nutrition on track
-  dotPurple: "#df84bd",  // all goals hit (That Girl Day ✨)
+  dotPink: "#D4577C",    // workout
+  dotGreen: "#7A8A3A",   // yoga/recovery
+  dotBlue: "#6BAAC4",    // nutrition on track
+  dotPurple: "#B03D68",  // all goals hit (That Girl Day ✨)
 };
 
 // ─── EXERCISE DATA (with form guide) ─────────────────────────────────────────
