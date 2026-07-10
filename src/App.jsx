@@ -19,7 +19,7 @@ const C = {
   sage: "#7A8A3A",
   amber: "#C77A9A",      // coral pink (was orange)
   crimson: "#C07080",
-  muted: "#a87890",
+  muted: "#7a5568",
   text: "#4a3a3f",
   sub: "#8a5167",        // lighter lavender
   inputBg: "#FFF5F8",
@@ -1695,7 +1695,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
             const numColor = h.workout ? C.dotPink : h.yoga ? C.dotGreen : hasDots ? C.sub : isFuture ? "#3a2a4a" : C.muted;
             return (
               <div key={day} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "3px 0", borderRadius: 6, border: isToday ? `1.5px solid ${C.dotPink}` : "1.5px solid transparent", opacity: isFuture ? 0.2 : 1 }}>
-                <div style={{ fontSize: 10, color: numColor, fontWeight: hasDots ? 700 : 500 }}>{day}</div>
+               <div style={{ fontSize: 10, color: numColor, fontWeight: hasDots ? 800 : 600 }}>{day}</div>                
                 <div style={{ display: "flex", gap: 2, justifyContent: "center", minHeight: 7 }}>
                   {h.workout && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotPink }} />}
                   {h.yoga && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotGreen }} />}
