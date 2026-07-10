@@ -1529,7 +1529,7 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
 
         {/* Today's stats */}
         <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.sub, marginBottom: 12 }}>Today's snapshot</div>
+          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.muted, marginBottom: 12 }}>Today's snapshot</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
               { label: "Workouts", val: `${workoutsDone}/5`, goal: null, color: C.dotPink, bg: "rgba(255,112,166,0.08)" },
@@ -1695,7 +1695,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
             const numColor = h.workout ? C.dotPink : h.yoga ? C.dotGreen : hasDots ? C.sub : isFuture ? "#3a2a4a" : C.muted;
             return (
               <div key={day} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "3px 0", borderRadius: 6, border: isToday ? `1.5px solid ${C.dotPink}` : "1.5px solid transparent", opacity: isFuture ? 0.2 : 1 }}>
-                <div style={{ fontSize: 10, color: numColor, fontWeight: hasDots ? 700 : 400 }}>{day}</div>
+                <div style={{ fontSize: 10, color: numColor, fontWeight: hasDots ? 700 : 500 }}>{day}</div>
                 <div style={{ display: "flex", gap: 2, justifyContent: "center", minHeight: 7 }}>
                   {h.workout && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotPink }} />}
                   {h.yoga && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotGreen }} />}
