@@ -2688,8 +2688,8 @@ export default function FitnessTracker() {
       {/* More drawer */}
       {showMore && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end" }} onClick={() => setShowMore(false)}>
-          <div style={{ background: "#1a0f24", borderRadius: "18px 18px 0 0", padding: "16px 20px 32px", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 2, margin: "0 auto 16px" }} />
+          <div style={{ background: C.surface, borderRadius: "18px 18px 0 0", padding: "16px 20px 32px", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>            
+           <div style={{ width: 36, height: 4, background: C.border, borderRadius: 2, margin: "0 auto 16px" }} />            
             <div style={{ fontSize: 11, fontWeight: 800, color: C.sub, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>More</div>
             {MORE_TABS.map(t => (
               <button key={t.k} onClick={() => { setActiveTab(t.k); setShowMore(false); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "13px 4px", background: "none", border: "none", borderBottom: `1px solid ${C.border}`, cursor: "pointer", color: activeTab === t.k ? C.rose : C.text, fontFamily: "inherit" }}>
