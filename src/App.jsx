@@ -2282,7 +2282,7 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
                   <button key={sym} onClick={() => {
                     const curr = todayCycle.symptoms || [];
                     updateCycleToday({ symptoms: sel ? curr.filter(s => s !== sym) : [...curr, sym] });
-                  }} style={{ padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(255,112,166,0.4)" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(255,112,166,0.1)" : "rgba(255,255,255,0.03)", color: sel ? C.dotPink : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>{sym}</button>
+                  }} style={{ padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(255,112,166,0.4)" : C.border}`, background: sel ? "rgba(255,112,166,0.1)" : C.surface, color: sel ? C.dotPink : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>{sym}</button>
                 );
               })}
             </div>
@@ -2291,7 +2291,7 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
             <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
               {ENERGIES.map(e => {
                 const sel = todayCycle.energy === e;
-                return <button key={e} onClick={() => updateCycleToday({ energy: sel ? "" : e })} style={{ flex: 1, padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(169,191,83,0.4)" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(169,191,83,0.1)" : "rgba(255,255,255,0.03)", color: sel ? C.dotGreen : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{e}</button>;
+                rreturn <button key={e} onClick={() => updateCycleToday({ energy: sel ? "" : e })} style={{ flex: 1, padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(169,191,83,0.4)" : C.border}`, background: sel ? "rgba(169,191,83,0.1)" : C.surface, color: sel ? C.dotGreen : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{e}</button>;
               })}
             </div>
 
@@ -2299,7 +2299,7 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
             <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
               {MOODS.map(m => {
                 const sel = todayCycle.mood === m;
-                return <button key={m} onClick={() => updateCycleToday({ mood: sel ? "" : m })} style={{ flex: 1, padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(223,132,189,0.4)" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(223,132,189,0.1)" : "rgba(255,255,255,0.03)", color: sel ? C.dotPurple : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{m}</button>;
+                return <button key={m} onClick={() => updateCycleToday({ mood: sel ? "" : m })} style={{ flex: 1, padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(223,132,189,0.4)" : C.border}`, background: sel ? "rgba(223,132,189,0.1)" : C.surface, color: sel ? C.dotPurple : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{m}</button>;
               })}
             </div>
 
