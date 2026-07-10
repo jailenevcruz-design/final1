@@ -1523,7 +1523,7 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
         </div>
         {topNudges.map((n, i) => (
           <div key={i} style={{ background: "rgba(192,132,160,0.08)", border: `1px solid rgba(192,132,160,0.2)`, borderRadius: 12, padding: "11px 14px", marginBottom: 9 }}>
-            <div style={{ fontSize: 12, color: "#e8c0d8", fontWeight: 600, lineHeight: 1.5 }}>{n.msg}</div>
+            <div style={{ fontSize: 12, color: "#B03D68", fontWeight: 600, lineHeight: 1.5 }}>{n.msg}</div>
           </div>
         ))}
 
@@ -1649,7 +1649,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
     <div style={{ padding: "16px 14px 24px" }}>
       <Card style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <div style={{ width: 58, height: 58, borderRadius: "50%", border: `2px solid ${C.rose}`, background: "rgba(192,132,160,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#e8c0d8" }}>{streak}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#B03D68" }}>{streak}</div>
           <div style={{ fontSize: 8, color: C.sub, fontWeight: 700, letterSpacing: .5 }}>DAYS</div>
         </div>
         <div style={{ flex: 1 }}>
@@ -1726,7 +1726,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
           {BADGES.map(b => (
             <div key={b.id} style={{ gridColumn: b.wide ? "span 2" : "span 1", background: b.req ? "rgba(192,132,160,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${b.req ? "rgba(192,132,160,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: 10, textAlign: "center", opacity: b.req ? 1 : 0.42 }}>
               <div style={{ fontSize: 24, marginBottom: 4 }}>{b.emoji}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: b.req ? "#e8c0d8" : C.sub }}>{b.label}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: b.req ? "#B03D68" : C.sub }}>{b.label}</div>
               <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{b.desc}</div>
               <div style={{ fontSize: 8, fontWeight: 700, color: b.req ? C.rose : C.muted, marginTop: 4, background: b.req ? "rgba(192,132,160,0.15)" : "rgba(255,255,255,0.05)", borderRadius: 4, padding: "2px 6px", display: "inline-block" }}>
                 {b.req ? "✓ UNLOCKED" : `${b.todo} to go`}
@@ -1743,7 +1743,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", background: m.earned ? "rgba(192,132,160,0.08)" : "rgba(255,255,255,0.03)", border: `1px ${m.earned ? "solid rgba(192,132,160,0.2)" : "dashed rgba(255,255,255,0.1)"}`, borderRadius: 9 }}>
               <div style={{ fontSize: 16 }}>{m.emoji}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: m.earned ? "#e8c0d8" : C.sub }}>{m.label}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: m.earned ? "#B03D68" : C.sub }}>{m.label}</div>
                 <input value={splurgeRewards[m.id] || ""} onChange={e => setSplurgeRewards(p => ({ ...p, [m.id]: e.target.value }))} placeholder="Tap to set your splurge…" style={{ fontSize: 10, color: splurgeRewards[m.id] ? C.text : C.muted, background: "transparent", border: "none", outline: "none", width: "100%", fontStyle: splurgeRewards[m.id] ? "normal" : "italic", fontFamily: "inherit", marginTop: 2 }} />
               </div>
               {m.earned && <div style={{ fontSize: 8, fontWeight: 700, color: C.rose, background: "rgba(192,132,160,0.15)", borderRadius: 4, padding: "2px 7px" }}>EARNED</div>}
