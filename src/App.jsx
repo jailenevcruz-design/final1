@@ -2657,14 +2657,14 @@ export default function FitnessTracker() {
   };
 
   const BOTTOM_NAV = [
-    { k: "home", emoji: "🪬", label: "Home" },
-    { k: "today", emoji: "🎀", label: "Workout" },
-    { k: "nutrition", emoji: "🍒", label: "Nutrition" },
+    { k: "home", emoji: "🌷", label: "Home" },
     { k: "habits", emoji: "💐", label: "Habits" },
-    { k: "streak", emoji: "✴️", label: "Streak" },
+    { k: "today", emoji: "🎀", label: "Workout" },
+    { k: "nutrition", emoji: "🍑", label: "Nutrition" },
+    { k: "streak", emoji: "🌟", label: "Streak" },
   ];
   const MORE_TABS = [
-    { k: "weight", emoji: "🫧", label: "Weight" },
+    { k: "weight", emoji: "🐇", label: "Weight" },
     { k: "yoga", emoji: "🪷", label: "Yoga" },
   ];
   const isMoreTab = MORE_TABS.some(t => t.k === activeTab);
