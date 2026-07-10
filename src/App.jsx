@@ -20,7 +20,7 @@ const C = {
   amber: "#C77A9A",      // coral pink (was orange)
   crimson: "#C07080",
   muted: "#7a5568",
-  text: "#4a3a3f",
+  text: "#914b6f",
   sub: "#8a5167",        // lighter lavender
   inputBg: "#FFF5F8",
   // activity dot palette
@@ -1529,8 +1529,8 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
 
         {/* Today's stats */}
 <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>          
-  <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.muted, marginBottom: 12 }}>Today's snapshot</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+<div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.sub, marginBottom: 12 }}>Today's snapshot</div>
+  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
               { label: "Workouts", val: `${workoutsDone}/5`, goal: null, color: C.dotPink, bg: "rgba(255,112,166,0.08)" },
               { label: "Calories", val: foodTotals.calories, goal: CALORIE_GOAL, unit: "", color: C.amber, bg: "rgba(232,130,154,0.08)" },
@@ -1667,7 +1667,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
         {[
           { val: workoutStreak, label: "💪 Workout", color: C.dotPink },
           { val: yogaStreak, label: "🧘 Yoga", color: C.dotGreen },
-          { val: noFastFoodStreak, label: "🍔 No fast food", color: C.amber },
+          { val: noFastFoodStreak, label: "🍔 No Junk", color: C.amber },
           { val: thatGirlStreak, label: "✨ That Girl", color: C.dotPurple },
         ].map(b => (
           <div key={b.label} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
