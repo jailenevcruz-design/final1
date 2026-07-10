@@ -2291,7 +2291,7 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
             <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
               {ENERGIES.map(e => {
                 const sel = todayCycle.energy === e;
-                rreturn <button key={e} onClick={() => updateCycleToday({ energy: sel ? "" : e })} style={{ flex: 1, padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(169,191,83,0.4)" : C.border}`, background: sel ? "rgba(169,191,83,0.1)" : C.surface, color: sel ? C.dotGreen : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{e}</button>;
+                return <button key={e} onClick={() => updateCycleToday({ energy: sel ? "" : e })} style={{ flex: 1, padding: "7px 4px", borderRadius: 8, border: `1px solid ${sel ? "rgba(169,191,83,0.4)" : C.border}`, background: sel ? "rgba(169,191,83,0.1)" : C.surface, color: sel ? C.dotGreen : C.sub, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>{e}</button>;
               })}
             </div>
 
