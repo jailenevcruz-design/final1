@@ -2670,8 +2670,7 @@ export default function FitnessTracker() {
   const isMoreTab = MORE_TABS.some(t => t.k === activeTab);
 
   return (
-<div style={{ fontFamily: "'Poppins','Segoe UI',sans-serif", background: C.bg, ...
-      {/* Fixed Header */}
+<div style={{ fontFamily: "'Poppins','Segoe UI',sans-serif", background: C.bg, color: C.text, position: "fixed", top: 0, left: 0, right: 0, bottom: 0, maxWidth: 500, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden" }}>      {/* Fixed Header */}
       <div style={{ padding: "14px 20px 10px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: C.bg, zIndex: 30 }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.5px" }}>Soft Life, Hard Work <span style={{ color: C.dotPurple }}>❀</span></div>
