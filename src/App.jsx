@@ -2716,7 +2716,7 @@ export default function FitnessTracker() {
       </div>
 
       {/* Fixed Bottom nav */}
-      <div style={{ background: "rgba(10,6,18,0.97)", borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 40, paddingBottom: 8, flexShrink: 0 }}>
+      <div style={{ background: "#FFFAFC", borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 40, paddingBottom: 8, flexShrink: 0 }}>
         {BOTTOM_NAV.map(t => (
           <button key={t.k} onClick={() => { setActiveTab(t.k); setShowMore(false); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 0 4px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
             <span style={{ fontSize: 20, lineHeight: 1 }}>{t.emoji}</span>
