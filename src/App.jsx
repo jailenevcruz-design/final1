@@ -1850,8 +1850,7 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   const MOODS = ["😢 Low","😐 Meh","😊 Good","🥰 Great"];
 
   const PillBtn = ({ id, label }) => (
-    <button onClick={() => setPill(id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, border: pill === id ? "none" : "1.5px solid rgba(255,255,255,0.1)", background: pill === id ? C.rose : "rgba(255,255,255,0.04)", color: pill === id ? "#fff" : C.sub, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{label}</button>
-  );
+    <button onClick={() => setPill(id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, border: pill === id ? `2px solid ${C.rose}` : `1.5px solid ${C.border}`, background: pill === id ? `${C.rose}15` : C.surface, color: pill === id ? C.rose : C.sub, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{label}</button>  );
 
   return (
     <div>
