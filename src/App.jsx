@@ -1528,8 +1528,8 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
         ))}
 
         {/* Today's stats */}
-        <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.muted, marginBottom: 12 }}>Today's snapshot</div>
+<div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>          
+  <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.muted, marginBottom: 12 }}>Today's snapshot</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
               { label: "Workouts", val: `${workoutsDone}/5`, goal: null, color: C.dotPink, bg: "rgba(255,112,166,0.08)" },
