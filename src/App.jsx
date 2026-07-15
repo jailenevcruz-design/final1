@@ -804,6 +804,26 @@ function runAutoResets() {
     }
   }
   localStorage.setItem("lastActiveWeek", weekKey);
+
+  // ── Habit streak decay: reset any habit streak broken by a missed day ──
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+  try {
+    const habitsRaw = localStorage.getItem("habits-list");
+    if (habitsRaw) {
+      const habits = JSON.parse(habitsRaw);
+      const decayed = habits.map(h => {
+        if (!h.lastDone) return h;
+        // If last completion wasn't today or yesterday, the streak is broken
+        if (h.lastDone !== todayKey && h.lastDone !== yesterdayKey) {
+          return { ...h, streak: 0 };
+        }
+        return h;
+      });
+      localStorage.setItem("habits-list", JSON.stringify(decayed));
+    }
+  } catch {}
 }
 
 function resetWeekManual() {
@@ -1838,6 +1858,10 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   };
   const [cycleCategory, setCycleCategory] = useState("flow");
   const [showPeriodDialog, setShowPeriodDialog] = useState(false);
+  const [periodDialogDate, setPeriodDialogDate] = useState(today);
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [selectedCalDay, setSelectedCalDay] = useState(null);
 
   // Find last period start/end to calculate day + phase
   const periodStarts = Object.entries(cycleLog).filter(([, v]) => v.periodEvent === "start").map(([k]) => k).sort();
@@ -1845,16 +1869,30 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   const lastPeriodStart = periodStarts[periodStarts.length - 1];
   const lastPeriodEnd = periodEnds[periodEnds.length - 1];
   const isOnPeriod = lastPeriodStart && (!lastPeriodEnd || lastPeriodEnd < lastPeriodStart);
-  const dayOfCycle = lastPeriodStart ? Math.floor((new Date(today) - new Date(lastPeriodStart)) / 86400000) + 1 : null;
+  // Average period length from logged history (fallback to 5 days if no data)
+  const loggedPeriodLengths = periodEnds.map(endKey => {
+    const priorStarts = periodStarts.filter(s => s <= endKey);
+    if (priorStarts.length === 0) return null;
+    const startKey = priorStarts[priorStarts.length - 1];
+    return Math.round((new Date(endKey) - new Date(startKey)) / 86400000) + 1;
+  }).filter(Boolean);
+  const avgPeriodLength = loggedPeriodLengths.length > 0 ? Math.round(loggedPeriodLengths.reduce((a,b) => a+b, 0) / loggedPeriodLengths.length) : 5;
+  // If only an "end" was logged with no start, back-calculate an estimated start
+  const estimatedStartFromEnd = (!lastPeriodStart && lastPeriodEnd) ? (() => {
+    const d = new Date(lastPeriodEnd); d.setDate(d.getDate() - (avgPeriodLength - 1));
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })() : null;
+  const effectiveStart = lastPeriodStart || estimatedStartFromEnd;
+  const dayOfCycle = effectiveStart ? Math.floor((new Date(today) - new Date(effectiveStart)) / 86400000) + 1 : null;
   const AVG_CYCLE = 28;
-  const daysLeft = lastPeriodStart ? AVG_CYCLE - dayOfCycle : null;
+  const daysLeft = effectiveStart ? AVG_CYCLE - dayOfCycle : null;
   const phase = isOnPeriod ? "period" : dayOfCycle ? (dayOfCycle <= 5 ? "period" : dayOfCycle <= 13 ? "follicular" : dayOfCycle <= 15 ? "ovulation" : "luteal") : null;
-  const nextPeriod = lastPeriodStart ? new Date(new Date(lastPeriodStart).getTime() + AVG_CYCLE * 86400000) : null;
+  const nextPeriod = effectiveStart ? new Date(new Date(effectiveStart).getTime() + AVG_CYCLE * 86400000) : null;
 
   const PHASE_INFO = {
     period: { emoji: "🩸", label: "Period Phase", color: C.dotPink },
     follicular: { emoji: "🌱", label: "Follicular Phase", color: C.sage },
-    ovulation: { emoji: "🌸", label: "Ovulation Phase", color: C.rose },
+    ovulation: { emoji: "🌸", label: "Ovulation Phase", color: "#9C5AB4" },
     luteal: { emoji: "🌙", label: "Luteal Phase", color: C.plum },
   };
   const AFFIRMATIONS = {
@@ -1866,19 +1904,19 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   const todayAffirmation = phase ? AFFIRMATIONS[phase][new Date().getDate() % AFFIRMATIONS[phase].length] : "Log your period to unlock daily affirmations tailored to your cycle.";
 
   const CYCLE_CATEGORIES = [
-    { id: "flow", emoji: "🩸", label: "Flow", options: [
+    { id: "flow", emoji: "🩸", label: "Flow", color: C.dotPink, options: [
       { emoji: "💧", label: "Light" }, { emoji: "🩸", label: "Medium" }, { emoji: "🔴", label: "Heavy" }, { emoji: "⚪", label: "None" },
     ]},
-    { id: "mucus", emoji: "💧", label: "Mucus", options: [
+    { id: "mucus", emoji: "💧", label: "Mucus", color: C.dotBlue, options: [
       { emoji: "💦", label: "Watery" }, { emoji: "🥚", label: "Egg white" }, { emoji: "🤍", label: "Creamy" }, { emoji: "🍯", label: "Sticky" },
     ]},
-    { id: "feelings", emoji: "😊", label: "Feelings", multi: true, options: [
+    { id: "feelings", emoji: "😊", label: "Feelings", color: "#C98A1A", multi: true, options: [
       { emoji: "⚡", label: "Energized" }, { emoji: "😴", label: "Exhausted" }, { emoji: "😰", label: "Anxious" }, { emoji: "😌", label: "Calm" },
     ]},
-    { id: "cravings", emoji: "🍫", label: "Cravings", multi: true, options: [
+    { id: "cravings", emoji: "🍫", label: "Cravings", color: "#9C5AB4", multi: true, options: [
       { emoji: "🧂", label: "Salty" }, { emoji: "🍰", label: "Sweet" }, { emoji: "🍫", label: "Chocolate" }, { emoji: "🍞", label: "Carbs" },
     ]},
-    { id: "symptoms", emoji: "🩹", label: "Symptoms", multi: true, options: [
+    { id: "symptoms", emoji: "🩹", label: "Symptoms", color: C.sage, multi: true, options: [
       { emoji: "😣", label: "Cramps" }, { emoji: "🤕", label: "Headache" }, { emoji: "🫄", label: "Bloating" }, { emoji: "💆", label: "Tender" },
     ]},
   ];
@@ -1893,8 +1931,15 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
     }
   };
 
+  const logPeriodEvent = (dateKey, eventType) => {
+    const existing = cycleLog[dateKey] || {};
+    const updated = { ...cycleLog, [dateKey]: { ...existing, periodEvent: eventType } };
+    setCycleLog(updated);
+    saveS("cycle-log", updated);
+  };
+
   const PillBtn = ({ id, label }) => (
-    <button onClick={() => setPill(id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, border: pill === id ? "none" : "1.5px solid C.border", background: pill === id ? C.rose : C.surface, color: pill === id ? "#fff" : C.sub, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{label}</button>
+    <button onClick={() => setPill(id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, border: pill === id ? "none" : `1.5px solid ${C.border}`, background: pill === id ? C.rose : C.surface, color: pill === id ? "#fff" : C.sub, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{label}</button>
   );
 
   return (
@@ -2018,7 +2063,20 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
                     const newDone = !habitsDone[h.id];
                     setHabitsDone(p => ({ ...p, [h.id]: newDone }));
                     if (newDone) {
-                      setHabits(prev => prev.map(x => x.id === h.id ? { ...x, streak: (x.streak || 0) + 1, lastDone: todayKey } : x));
+                      // Calculate yesterday's date key to check for continuity
+                      const yesterday = new Date();
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+                      setHabits(prev => prev.map(x => {
+                        if (x.id !== h.id) return x;
+                        // Streak continues only if last completed day was yesterday (or today, re-checking same day)
+                        const continuesStreak = x.lastDone === yesterdayKey || x.lastDone === todayKey;
+                        const newStreak = continuesStreak ? (x.streak || 0) + 1 : 1;
+                        return { ...x, streak: newStreak, lastDone: todayKey };
+                      }));
+                    } else {
+                      // Unchecking today undoes today's streak increment
+                      setHabits(prev => prev.map(x => x.id === h.id && x.lastDone === todayKey ? { ...x, streak: Math.max(0, (x.streak || 1) - 1), lastDone: "" } : x));
                     }
                   }} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${habitsDone[h.id] ? C.dotGreen : C.border}`, background: habitsDone[h.id] ? "rgba(169,191,83,0.2)" : "transparent", color: C.dotGreen, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "transform 0.15s, background 0.15s" }}>{habitsDone[h.id] ? "✓" : ""}</button>
                   <button onClick={() => setEditSheet(h.id)} style={{ fontSize: 14, color: C.muted, background: "none", border: "none", cursor: "pointer", padding: "0 2px", flexShrink: 0 }}>···</button>
@@ -2268,14 +2326,122 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
           </div>
 
           {/* Log period button */}
-          <button onClick={() => setShowPeriodDialog(true)} style={{ width: "100%", padding: 12, borderRadius: 12, border: "none", background: C.rose, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", marginBottom: 10, fontFamily: "inherit" }}>
+          <button onClick={() => { setPeriodDialogDate(today); setShowPeriodDialog(true); }} style={{ width: "100%", padding: 12, borderRadius: 12, border: "none", background: C.rose, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", marginBottom: 10, fontFamily: "inherit" }}>
             🩸 Log Period {isOnPeriod ? "(currently on period)" : ""}
           </button>
 
-          {/* Category pills */}
+          {/* Calendar view with period bars + symptom dots */}
+          <Card>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <button onClick={() => { const m = calendarMonth === 0 ? 11 : calendarMonth - 1; setCalendarMonth(m); setCalendarYear(calendarMonth === 0 ? calendarYear - 1 : calendarYear); }} style={{ background: "none", border: "none", fontSize: 16, color: C.muted, cursor: "pointer", padding: 4 }}>‹</button>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{new Date(calendarYear, calendarMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
+              <button onClick={() => { const m = calendarMonth === 11 ? 0 : calendarMonth + 1; setCalendarMonth(m); setCalendarYear(calendarMonth === 11 ? calendarYear + 1 : calendarYear); }} style={{ background: "none", border: "none", fontSize: 16, color: C.muted, cursor: "pointer", padding: 4 }}>›</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center", marginBottom: 5 }}>
+              {["S","M","T","W","T","F","S"].map((d,i) => <div key={i} style={{ fontSize: 9, color: C.muted, fontWeight: 700 }}>{d}</div>)}
+            </div>
+            {(() => {
+              const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+              const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+              const isDayOnPeriod = (dateKey) => {
+                for (let i = 0; i < periodStarts.length; i++) {
+                  const s = periodStarts[i];
+                  const e = periodEnds.find(end => end >= s) || null;
+                  if (dateKey >= s && (!e || dateKey <= e)) return true;
+                }
+                return false;
+              };
+              // Fertile window: ~day 10-15 of cycle, based on effectiveStart
+              const isDayFertile = (dateKey) => {
+                if (!effectiveStart) return false;
+                const d = Math.floor((new Date(dateKey) - new Date(effectiveStart)) / 86400000) + 1;
+                const cycleDay = ((d - 1) % AVG_CYCLE) + 1;
+                return cycleDay >= 10 && cycleDay <= 15;
+              };
+              return (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+                  {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const day = i + 1;
+                    const dateKey = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const onPeriod = isDayOnPeriod(dateKey);
+                    const isFertile = !onPeriod && isDayFertile(dateKey);
+                    const dayLog = cycleLog[dateKey];
+                    const hasSymptoms = dayLog && ((dayLog.symptoms||[]).length > 0 || (dayLog.feelings||[]).length > 0 || (dayLog.cravings||[]).length > 0);
+                    const isToday = dateKey === today;
+                    const isSel = selectedCalDay === dateKey;
+                    const bg = onPeriod ? C.dotPink : isFertile ? C.dotBlue : "transparent";
+                    return (
+                      <div key={day} onClick={() => setSelectedCalDay(isSel ? null : dateKey)} style={{ textAlign: "center", padding: "4px 0", borderRadius: 6, background: bg, border: isToday ? `2px solid #E8A93A` : isSel ? `2px solid #9C5AB4` : "2px solid transparent", cursor: "pointer" }}>
+                        <div style={{ fontSize: 10, fontWeight: (onPeriod || isFertile) ? 800 : 500, color: (onPeriod || isFertile) ? "#fff" : C.text }}>{day}</div>
+                        {hasSymptoms && <div style={{ width: 5, height: 5, borderRadius: "50%", background: (onPeriod || isFertile) ? "#fff" : C.sage, margin: "2px auto 0" }} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+            <div style={{ display: "flex", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: C.dotPink }} />
+                <span style={{ fontSize: 9, color: C.sub }}>Period</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: C.dotBlue }} />
+                <span style={{ fontSize: 9, color: C.sub }}>Fertile</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.sage }} />
+                <span style={{ fontSize: 9, color: C.sub }}>Symptoms</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, border: "2px solid #E8A93A", background: "rgba(232,169,58,0.15)" }} />
+                <span style={{ fontSize: 9, color: C.sub }}>Today</span>
+              </div>
+            </div>
+
+            {/* Selected day details */}
+            {selectedCalDay && (
+              <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(156,90,180,0.06)", borderRadius: 10, borderLeft: "3px solid #9C5AB4" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#9C5AB4", marginBottom: 6 }}>{new Date(selectedCalDay).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+                {cycleLog[selectedCalDay] && ["flow","mucus","feelings","cravings","symptoms"].map(cat => {
+                  const val = cycleLog[selectedCalDay][cat];
+                  if (!val || (Array.isArray(val) && val.length === 0)) return null;
+                  return <div key={cat} style={{ fontSize: 10, color: C.text, marginBottom: 3 }}><span style={{ color: C.sub, textTransform: "capitalize", fontWeight: 700 }}>{cat}:</span> {Array.isArray(val) ? val.join(", ") : val}</div>;
+                })}
+
+                {/* Period event controls */}
+                {cycleLog[selectedCalDay]?.periodEvent ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(156,90,180,0.15)" }}>
+                    <div style={{ fontSize: 10, color: C.dotPink, fontWeight: 700 }}>🩸 Period {cycleLog[selectedCalDay].periodEvent}</div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => {
+                        const curr = cycleLog[selectedCalDay].periodEvent;
+                        logPeriodEvent(selectedCalDay, curr === "start" ? "end" : "start");
+                      }} style={{ fontSize: 9, fontWeight: 700, color: "#9C5AB4", background: "rgba(156,90,180,0.12)", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>Switch to {cycleLog[selectedCalDay].periodEvent === "start" ? "End" : "Start"}</button>
+                      <button onClick={() => {
+                        const updated = { ...cycleLog };
+                        const { periodEvent, ...rest } = updated[selectedCalDay];
+                        updated[selectedCalDay] = rest;
+                        setCycleLog(updated);
+                        saveS("cycle-log", updated);
+                      }} style={{ fontSize: 9, fontWeight: 700, color: C.amber, background: `${C.amber}18`, border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>Remove</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, paddingTop: 6, borderTop: cycleLog[selectedCalDay] ? "1px solid rgba(156,90,180,0.15)" : "none" }}>
+                    <button onClick={() => logPeriodEvent(selectedCalDay, "start")} style={{ flex: 1, fontSize: 10, fontWeight: 700, color: "#fff", background: C.dotPink, border: "none", borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: "inherit" }}>+ Log as Start</button>
+                    <button onClick={() => logPeriodEvent(selectedCalDay, "end")} style={{ flex: 1, fontSize: 10, fontWeight: 700, color: C.plum, background: C.border, border: "none", borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: "inherit" }}>+ Log as End</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* Category pills - each with its own color */}
           <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 10, paddingBottom: 2 }}>
             {CYCLE_CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => setCycleCategory(cat.id)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 16, fontSize: 10, fontWeight: 700, border: cycleCategory === cat.id ? "none" : `1.5px solid ${C.border}`, background: cycleCategory === cat.id ? C.rose : C.surface, color: cycleCategory === cat.id ? "#fff" : C.sub, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{cat.emoji} {cat.label}</button>
+              <button key={cat.id} onClick={() => setCycleCategory(cat.id)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 16, fontSize: 10, fontWeight: 700, border: cycleCategory === cat.id ? "none" : `1.5px solid ${cat.color}50`, background: cycleCategory === cat.id ? cat.color : `${cat.color}18`, color: cycleCategory === cat.id ? "#fff" : cat.color, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{cat.emoji} {cat.label}</button>
             ))}
           </div>
 
@@ -2287,7 +2453,7 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
                 const sel = activeCategory.multi ? (todayCycle[activeCategory.id] || []).includes(opt.label) : todayCycle[activeCategory.id] === opt.label;
                 return (
                   <div key={opt.label} onClick={() => toggleCycleOption(activeCategory.id, opt.label, activeCategory.multi)} style={{ textAlign: "center", cursor: "pointer" }}>
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: sel ? C.rose : C.inputBg, border: `1.5px solid ${sel ? C.rose : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 5px" }}>{opt.emoji}</div>
+                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: sel ? activeCategory.color : C.inputBg, border: `1.5px solid ${sel ? activeCategory.color : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 5px" }}>{opt.emoji}</div>
                     <div style={{ fontSize: 9, color: C.text, fontWeight: 600 }}>{opt.label}</div>
                   </div>
                 );
@@ -2295,24 +2461,26 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
             </div>
           </Card>
 
-          {/* Next period prediction */}
+          {/* Next period prediction - amber/gold accent */}
           {nextPeriod && (
-            <Card style={{ textAlign: "center" }}>
+            <Card style={{ textAlign: "center", background: "rgba(232,169,58,0.08)", borderColor: "rgba(232,169,58,0.35)" }}>
               <div style={{ fontSize: 9, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Next period predicted</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: C.rose }}>{nextPeriod.toLocaleDateString("en-US", { month: "long", day: "numeric" })}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#C98A1A" }}>{nextPeriod.toLocaleDateString("en-US", { month: "long", day: "numeric" })}</div>
               <div style={{ fontSize: 10, color: C.sub, marginTop: 3 }}>in {Math.max(0, Math.round((nextPeriod - new Date()) / 86400000))} days · avg cycle {AVG_CYCLE} days</div>
+              {!lastPeriodStart && estimatedStartFromEnd && <div style={{ fontSize: 9, color: C.amber, marginTop: 6 }}>⚠ Start date estimated from your logged end date + average {avgPeriodLength}-day period</div>}
             </Card>
           )}
 
-          {/* Start/End dialog */}
+          {/* Start/End dialog with editable date */}
           {showPeriodDialog && (
             <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)" }} onClick={() => setShowPeriodDialog(false)}>
-              <div style={{ background: C.surface, borderRadius: 16, padding: 20, width: 240, textAlign: "center" }} onClick={e => e.stopPropagation()}>
+              <div style={{ background: C.surface, borderRadius: 16, padding: 20, width: 260, textAlign: "center" }} onClick={e => e.stopPropagation()}>
                 <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Log Period 🩸</div>
-                <div style={{ fontSize: 11, color: C.sub, marginBottom: 16 }}>Is today the start or end?</div>
+                <div style={{ fontSize: 11, color: C.sub, marginBottom: 12 }}>Choose the date, then start or end</div>
+                <input type="date" value={periodDialogDate} onChange={e => setPeriodDialogDate(e.target.value)} max={today} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.inputBg, color: C.text, fontSize: 12, fontFamily: "inherit", marginBottom: 14, boxSizing: "border-box" }} />
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => { updateCycleToday({ periodEvent: "start" }); setShowPeriodDialog(false); }} style={{ flex: 1, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: C.rose, color: "#fff", fontFamily: "inherit" }}>Start</button>
-                  <button onClick={() => { updateCycleToday({ periodEvent: "end" }); setShowPeriodDialog(false); }} style={{ flex: 1, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: C.border, color: C.plum, fontFamily: "inherit" }}>End</button>
+                  <button onClick={() => { logPeriodEvent(periodDialogDate, "start"); setShowPeriodDialog(false); }} style={{ flex: 1, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: C.rose, color: "#fff", fontFamily: "inherit" }}>Start</button>
+                  <button onClick={() => { logPeriodEvent(periodDialogDate, "end"); setShowPeriodDialog(false); }} style={{ flex: 1, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: C.border, color: C.plum, fontFamily: "inherit" }}>End</button>
                 </div>
               </div>
             </div>
