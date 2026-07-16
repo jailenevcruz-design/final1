@@ -2619,6 +2619,7 @@ function PlanTab({ weeklyWorkouts }) {
 
 function WorkoutExerciseCard({ ex, exKey, done, dayColor, checkEx }) {
   const [setsDone, setSetsDone] = useState(() => loadS(`sets-${exKey}`, []));
+  const [open, setOpen] = useState(false);
   const totalSets = ex.sets;
   const doneSetCount = setsDone.length;
 
@@ -2635,8 +2636,8 @@ function WorkoutExerciseCard({ ex, exKey, done, dayColor, checkEx }) {
   };
 
   return (
-    <div style={{ background: done ? `${C.dotGreen}12` : C.surface, border: `1px solid ${done ? `${C.dotGreen}40` : C.border}`, borderRadius: 13, padding: "12px 13px", marginBottom: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ background: done ? `${C.dotGreen}12` : C.surface, border: `1px solid ${done ? `${C.dotGreen}40` : C.border}`, borderRadius: 13, marginBottom: 8, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 13px", cursor: ex.formGuide ? "pointer" : "default" }} onClick={() => ex.formGuide && setOpen(o => !o)}>
         <div style={{ width: 38, height: 38, borderRadius: 11, background: done ? `${C.dotGreen}22` : `${dayColor}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{done ? "✓" : "🏋️"}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: done ? C.sub : C.text, textDecoration: done ? "line-through" : "none" }}>{ex.name}</div>
@@ -2646,11 +2647,13 @@ function WorkoutExerciseCard({ ex, exKey, done, dayColor, checkEx }) {
           </div>
         </div>
         {ex.sets <= 1 && (
-          <button className="check-anim" onClick={() => checkEx(exKey, !done)} style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${done ? `${C.dotGreen}80` : C.border}`, background: done ? `${C.dotGreen}22` : "transparent", color: done ? C.dotGreen : C.muted, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "inherit", transition: "transform 0.15s, background 0.15s" }}>{done ? "✓" : "○"}</button>
+          <button className="check-anim" onClick={e => { e.stopPropagation(); checkEx(exKey, !done); }} style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${done ? `${C.dotGreen}80` : C.border}`, background: done ? `${C.dotGreen}22` : "transparent", color: done ? C.dotGreen : C.muted, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "inherit", transition: "transform 0.15s, background 0.15s" }}>{done ? "✓" : "○"}</button>
         )}
+        {ex.formGuide && <div style={{ fontSize: 10, color: C.muted, flexShrink: 0, marginLeft: 4 }}>{open ? "▲" : "▼"}</div>}
       </div>
+
       {ex.sets > 1 && (
-        <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 6, padding: "0 13px 10px", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ fontSize: 9, color: C.sub, marginRight: 2 }}>Sets:</div>
           {Array.from({ length: ex.sets }).map((_, i) => {
             const setChecked = setsDone.includes(i);
@@ -2660,6 +2663,40 @@ function WorkoutExerciseCard({ ex, exKey, done, dayColor, checkEx }) {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Expanded form guide */}
+      {open && ex.formGuide && (
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: "14px 14px 16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+            <div style={{ background: `${dayColor}0f`, borderRadius: 8, padding: 10 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: dayColor, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 5 }}>Start Position</div>
+              <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.6 }}>{ex.formGuide.start}</div>
+            </div>
+            <div style={{ background: `${dayColor}0f`, borderRadius: 8, padding: 10 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: dayColor, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 5 }}>End Position</div>
+              <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.6 }}>{ex.formGuide.end}</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: C.sub, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6 }}>Form Cues</div>
+            {ex.formGuide.cues.map((cue, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 5 }}>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: dayColor, flexShrink: 0, marginTop: 5 }} />
+                <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.6 }}>{cue}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: `${C.amber}12`, border: `1px solid ${C.amber}30`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: C.amber, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4 }}>⚠ Common Mistake</div>
+            <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.5 }}>{ex.formGuide.mistake}</div>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {ex.formGuide.muscles.map(m => (
+              <span key={m} style={{ fontSize: 10, color: dayColor, background: `${dayColor}18`, borderRadius: 6, padding: "3px 8px", fontWeight: 600 }}>{m}</span>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -2896,7 +2933,7 @@ export default function FitnessTracker() {
       {/* More drawer */}
       {showMore && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end" }} onClick={() => setShowMore(false)}>
-          <div style={{ background: "#1a0f24", borderRadius: "18px 18px 0 0", padding: "16px 20px 32px", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: C.surface, borderRadius: "18px 18px 0 0", padding: "16px 20px 32px", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
             <div style={{ width: 36, height: 4, background: C.border, borderRadius: 2, margin: "0 auto 16px" }} />
             <div style={{ fontSize: 11, fontWeight: 800, color: C.sub, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>More</div>
             {MORE_TABS.map(t => (
@@ -2924,7 +2961,7 @@ export default function FitnessTracker() {
       </div>
 
       {/* Fixed Bottom nav */}
-      <div style={{ background: "rgba(10,6,18,0.97)", borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 40, paddingBottom: 8, flexShrink: 0 }}>
+      <div style={{ background: C.surface, borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 40, paddingBottom: 8, flexShrink: 0 }}>
         {BOTTOM_NAV.map(t => (
           <button key={t.k} onClick={() => { setActiveTab(t.k); setShowMore(false); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 0 4px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
             <span style={{ fontSize: 20, lineHeight: 1 }}>{t.emoji}</span>
