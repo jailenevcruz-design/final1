@@ -1697,7 +1697,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
         {[
           { val: workoutStreak, label: "💪 Workout", color: C.dotPink },
           { val: yogaStreak, label: "🧘 Yoga", color: C.dotGreen },
-          { val: noFastFoodStreak, label: "🍔 No fast food", color: C.amber },
+          { val: noFastFoodStreak, label: "🚫🍔 No fast food", color: C.amber },
           { val: hydrationStreak, label: "💧 Hydration", color: C.dotBlue },
         ].map(b => (
           <div key={b.label} style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
@@ -1706,6 +1706,18 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
           </div>
         ))}
       </div>
+
+      {/* Individual habit streaks - icon-only bubbles, same style as above */}
+      {(habits || []).filter(h => h.id !== "nofastfood").length > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          {(habits || []).filter(h => h.id !== "nofastfood").map(h => (
+            <div key={h.id} style={{ flex: "1 1 0", minWidth: 60, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
+              <div style={{ fontSize: 18, marginBottom: 3 }}>{h.emoji}</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: (h.streak || 0) > 0 ? C.plum : C.muted }}>{h.streak || 0}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <Card>
         <SectionLabel>{monthNames[month]} {year}</SectionLabel>
@@ -1829,19 +1841,6 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   };
   const suppStreak = calcSuppStreak();
 
-  // Habit streak (overall — any habit done)
-  const calcHabitStreak = () => {
-    let s = 0;
-    const today = new Date();
-    for (let i = 0; i < 90; i++) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const done = loadS(`habits-done-${k}`, {});
-      if (Object.values(done).some(Boolean)) s++; else if (i > 0) break;
-    }
-    return s;
-  };
-  const habitStreak = calcHabitStreak();
 
   // Add habit form state
   const [showAddHabit, setShowAddHabit] = useState(false);
@@ -1989,8 +1988,8 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
             </div>
             <div style={{ background: `${C.rose}10`, border: `1px solid ${C.rose}30`, borderRadius: 14, padding: "12px 13px" }}>
               <div style={{ fontSize: 9, fontWeight: 800, color: C.rose, marginBottom: 4, textTransform: "uppercase", letterSpacing: .5 }}>✨ Habits</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: C.rose }}>{habitStreak} <span style={{ fontSize: 11 }}>days</span></div>
-              <div style={{ fontSize: 9, color: C.sub, marginTop: 8 }}>current streak</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: C.rose }}>{Object.values(habitsDone).filter(Boolean).length}<span style={{ fontSize: 11 }}>/{habits.length}</span></div>
+              <div style={{ fontSize: 9, color: C.sub, marginTop: 8 }}>done today</div>
             </div>
           </div>
 
@@ -2869,12 +2868,22 @@ export default function FitnessTracker() {
       setWeeklyHistory(loadS("weekly-history", {}));
       setWeeklyWorkouts(loadS(`wkly-${weekKey}`, {}));
       setChecked(loadS(`ex-${todayKey}`, {}));
-      setHabits(loadS("habits-list", [
+      const loadedHabits = loadS("habits-list", [
         { id: "nofastfood", name: "No fast food today", emoji: "🍔", color: "rgba(199,122,154,0.15)", streak: 0, lastDone: "" },
         { id: "h1", name: "No phone before bed", emoji: "🌙", color: "rgba(192,132,160,0.15)", streak: 0, lastDone: "" },
         { id: "h2", name: "Skincare routine", emoji: "🧴", color: "rgba(160,124,192,0.15)", streak: 0, lastDone: "" },
         { id: "h3", name: "Journal / gratitude", emoji: "📓", color: "rgba(123,191,160,0.15)", streak: 0, lastDone: "" },
-      ]));
+      ]);
+      // Decay any habit streak broken by a missed day - applied to the actually-loaded data
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+      const decayedHabits = loadedHabits.map(h => {
+        if (!h.lastDone) return h;
+        if (h.lastDone !== todayKey && h.lastDone !== yKey) return { ...h, streak: 0 };
+        return h;
+      });
+      setHabits(decayedHabits);
+      saveS("habits-list", decayedHabits);
       setCycleLog(loadS("cycle-log", {}));
       setSuppRoutineWeek(loadS("supp-routine-week", 1));
       setSuppRoutineComplete(loadS("supp-routine-complete", false));
