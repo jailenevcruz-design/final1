@@ -1447,8 +1447,6 @@ function YogaTab({ markTodayDots }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStats, weightLog, setActiveTab }) {
-  const [slide, setSlide] = useState(0);
-  const [weather, setWeather] = useState(null);
   const CAROUSEL = [
     { src: "/images/IMG_7875.jpeg", pos: "center 40%", quote: '"She is fierce. She is strong. She is her own goal."' },
     { src: "/images/IMG_7872.jpeg", pos: "center 20%", quote: '"Every rep brings you closer to her."' },
@@ -1457,6 +1455,8 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, foodTotals, waterOz, dailyStat
     { src: "/images/IMG_9302.JPG",  pos: "center 25%", quote: '"Glow different. Not harder."' },
     { src: "/images/IMG_9300.JPG",  pos: "center 20%", quote: '"She didn\'t just wish — she got to work."' },
   ];
+  const [slide, setSlide] = useState(() => Math.floor(Math.random() * CAROUSEL.length));
+  const [weather, setWeather] = useState(null);
   useEffect(() => {
     const t = setInterval(() => setSlide(s => (s + 1) % CAROUSEL.length), 3800);
     return () => clearInterval(t);
