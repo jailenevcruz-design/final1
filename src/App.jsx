@@ -1173,11 +1173,11 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog
         </div>
 
         {/* Streak link card */}
-        <button onClick={() => setActiveTab("streak")} style={{ width: "100%", background: "linear-gradient(135deg, rgba(212,87,124,0.08), rgba(160,90,180,0.06))", border: `1px solid ${C.rose}30`, borderRadius: 16, padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+        <button onClick={() => setActiveTab("habits")} style={{ width: "100%", background: "linear-gradient(135deg, rgba(212,87,124,0.08), rgba(160,90,180,0.06))", border: `1px solid ${C.rose}30`, borderRadius: 16, padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
           <div style={{ fontSize: 24 }}>✴️</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>View your streaks</div>
-            <div style={{ fontSize: 10, color: C.sub, marginTop: 1 }}>Workout · Yoga · No Fast Food · Hydration</div>
+            <div style={{ fontSize: 10, color: C.sub, marginTop: 1 }}>Weekly consistency · Habits · Badges</div>
           </div>
           <div style={{ fontSize: 16, color: C.rose }}>→</div>
         </button>
@@ -1216,176 +1216,47 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog
   );
 }
 
-function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards, habits, wide }) {
-  const today = new Date();
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
-    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const h = weeklyHistory[k];
-    if (h?.workout || h?.yoga) streak++;
-    else if (i > 0) break;
-  }
-  // Individual category streaks
-  const calcCategoryStreak = (field) => {
-    let s = 0;
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const h = weeklyHistory[k];
-      if (h?.[field]) s++; else if (i > 0) break;
+// ── Weekly-consistency streaks ───────────────────────────────────────────────
+// A week (Mon–Sun) counts when you log WEEKLY_TARGET+ active days (workout or yoga).
+// Rest days never break a streak, and the week in progress never breaks it either.
+const WEEKLY_TARGET = 4;
+const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const mondayOf = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+
+function computeWeekly(weeklyHistory) {
+  const isActive = (k) => !!(weeklyHistory[k] && (weeklyHistory[k].workout || weeklyHistory[k].yoga));
+  const countWeek = (monday) => { let c = 0; for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(d.getDate() + i); if (isActive(dayKey(d))) c++; } return c; };
+  const now = new Date();
+  const thisMon = mondayOf(now);
+  const weekAt = (back) => { const m = new Date(thisMon); m.setDate(m.getDate() - 7 * back); return m; };
+
+  const weeks = [];
+  for (let b = 7; b >= 0; b--) { const m = weekAt(b); const c = countWeek(m); weeks.push({ monday: m, count: c, hit: c >= WEEKLY_TARGET, current: b === 0 }); }
+  const current = weeks[weeks.length - 1];
+
+  let streak = current.hit ? 1 : 0;
+  for (let b = 1; b < 520; b++) { if (countWeek(weekAt(b)) >= WEEKLY_TARGET) streak++; else break; }
+
+  const activeKeys = Object.keys(weeklyHistory).filter(isActive).sort();
+  let best = 0;
+  if (activeKeys.length) {
+    let run = 0;
+    for (let m = mondayOf(new Date(activeKeys[0] + "T00:00:00")); m <= thisMon; m = new Date(m.getFullYear(), m.getMonth(), m.getDate() + 7)) {
+      if (countWeek(m) >= WEEKLY_TARGET) { run++; if (run > best) best = run; }
+      else if (m < thisMon) run = 0;
     }
-    return s;
-  };
-  const workoutStreak = calcCategoryStreak("workout");
-  const yogaStreak = calcCategoryStreak("yoga");
-  const hydrationStreak = calcCategoryStreak("hydration");
-  // No fast food streak comes from the habit's own streak counter (manually checked daily)
-  const noFastFoodHabit = (habits || []).find(h => h.id === "nofastfood");
-  const noFastFoodStreak = noFastFoodHabit ? (noFastFoodHabit.streak || 0) : 0;
-
-  let bestStreak = 0, cur = 0;
-  const allDays = Object.keys(weeklyHistory).sort();
-  for (const k of allDays) {
-    const h = weeklyHistory[k];
-    if (h?.workout || h?.yoga) { cur++; if (cur > bestStreak) bestStreak = cur; } else cur = 0;
   }
-  const totalWorkouts = Object.values(weeklyHistory).filter(h => h?.workout).length;
-  const BADGES = [
-    { id: "7d", emoji: "🌸", label: "7-day streak", desc: "7 consistent days", req: streak >= 7, todo: Math.max(0, 7 - streak) },
-    { id: "21d", emoji: "💜", label: "21-day streak", desc: "21 consistent days", req: streak >= 21, todo: Math.max(0, 21 - streak) },
-    { id: "30d", emoji: "🔥", label: "30-day streak", desc: "30 consecutive days", req: streak >= 30, todo: Math.max(0, 30 - streak) },
-    { id: "60d", emoji: "⚡", label: "60-day streak", desc: "60 consecutive days", req: streak >= 60, todo: Math.max(0, 60 - streak) },
-    { id: "90d", emoji: "👑", label: "90-day streak", desc: "90 consecutive days", req: streak >= 90, todo: Math.max(0, 90 - streak) },
-    { id: "100w", emoji: "💯", label: "100 workouts", desc: "Complete 100 workouts", req: totalWorkouts >= 100, todo: Math.max(0, 100 - totalWorkouts) },
-  ];
-  const SPLURGE = [
-    { id: "7", emoji: "🌸", label: "7-day reward", earned: streak >= 7 },
-    { id: "30", emoji: "🔥", label: "30-day reward", earned: streak >= 30 },
-    { id: "90", emoji: "👑", label: "90-day reward", earned: streak >= 90 },
-  ];
-  const year = today.getFullYear(); const month = today.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-  const monthStart = (firstDay + 6) % 7;
-  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const todayKey = getTodayKey();
-  return (
-    <div className={wide ? "wide-cols" : undefined} style={{ padding: "16px 14px 24px" }}>
-      <Card style={{ display: "flex", gap: 14, alignItems: "center" }}>
-        <div style={{ width: 58, height: 58, borderRadius: "50%", border: `2px solid ${C.rose}`, background: "rgba(192,132,160,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#7A3AA8" }}>{streak}</div>
-          <div style={{ fontSize: 8, color: C.sub, fontWeight: 700, letterSpacing: .5 }}>DAYS</div>
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 2 }}>Current streak</div>
-          <div style={{ fontSize: 11, color: C.sub }}>Best: {bestStreak} days · {totalWorkouts} total workouts</div>
-        </div>
-      </Card>
+  best = Math.max(best, streak);
 
-      {/* Per-category streak bubbles */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        {[
-          { val: workoutStreak, label: "💪 Workout", color: C.dotPink },
-          { val: yogaStreak, label: "🧘 Yoga", color: C.dotGreen },
-          { val: noFastFoodStreak, label: "🚫🍔 No fast food", color: C.amber },
-          { val: hydrationStreak, label: "💧 Hydration", color: C.dotBlue },
-        ].map(b => (
-          <div key={b.label} style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: b.color }}>{b.val}</div>
-            <div style={{ fontSize: 8, color: C.sub, marginTop: 2, fontWeight: 700 }}>{b.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Individual habit streaks - icon-only bubbles, same style as above */}
-      {(habits || []).filter(h => h.id !== "nofastfood").length > 0 && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-          {(habits || []).filter(h => h.id !== "nofastfood").map(h => (
-            <div key={h.id} style={{ flex: "1 1 0", minWidth: 60, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
-              <div style={{ fontSize: 18, marginBottom: 3 }}>{h.emoji}</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: (h.streak || 0) > 0 ? C.plum : C.muted }}>{h.streak || 0}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Card>
-        <SectionLabel>{monthNames[month]} {year}</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center", marginBottom: 5 }}>
-          {["M","T","W","T","F","S","S"].map((d,i) => <div key={i} style={{ fontSize: 9, color: C.muted }}>{d}</div>)}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center" }}>
-          {Array.from({ length: monthStart }).map((_, i) => <div key={`e${i}`} />)}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1;
-            const d = new Date(year, month, day);
-            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            const h = weeklyHistory[k] || {};
-            const isToday = k === todayKey;
-            const isFuture = d > today;
-            const hasDots = h.workout || h.yoga || h.nutrition;
-            const numColor = h.workout ? C.dotPink : h.yoga ? C.dotGreen : hasDots ? C.sub : isFuture ? "#BDA9CF" : C.muted;
-            return (
-              <div key={day} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "3px 0", borderRadius: 6, border: isToday ? `1.5px solid ${C.dotPink}` : "1.5px solid transparent", opacity: isFuture ? 0.2 : 1 }}>
-                <div style={{ fontSize: 10, color: numColor, fontWeight: hasDots ? 700 : 400 }}>{day}</div>
-                <div style={{ display: "flex", gap: 2, justifyContent: "center", minHeight: 7 }}>
-                  {h.workout && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotPink }} />}
-                  {h.yoga && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotGreen }} />}
-                  {h.nutrition && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotBlue }} />}
-                  {h.workout && h.yoga && h.nutrition && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotPurple, boxShadow: `0 0 4px ${C.dotPurple}` }} />}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-          {[
-            { color: C.dotPink, label: "Workout" },
-            { color: C.dotGreen, label: "Yoga / recovery" },
-            { color: C.dotBlue, label: "Hydration goal hit" },
-            { color: C.amber, label: "No fast food" },
-          ].map(({ color, label }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
-              <span style={{ fontSize: 9, color: C.sub }}>{label}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-      <Card>
-        <SectionLabel>Streak badges</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {BADGES.map(b => (
-            <div key={b.id} style={{ gridColumn: b.wide ? "span 2" : "span 1", background: b.req ? "rgba(192,132,160,0.1)" : C.surface, border: `1px solid ${b.req ? "rgba(192,132,160,0.3)" : C.border}`, borderRadius: 10, padding: 10, textAlign: "center", opacity: b.req ? 1 : 0.42 }}>
-              <div style={{ fontSize: 24, marginBottom: 4 }}>{b.emoji}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: b.req ? "#7A3AA8" : C.sub }}>{b.label}</div>
-              <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{b.desc}</div>
-              <div style={{ fontSize: 8, fontWeight: 700, color: b.req ? C.rose : C.muted, marginTop: 4, background: b.req ? "rgba(192,132,160,0.15)" : C.inputBg, borderRadius: 4, padding: "2px 6px", display: "inline-block" }}>
-                {b.req ? "✓ UNLOCKED" : `${b.todo} to go`}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-      <Card>
-        <SectionLabel>Splurge rewards 🛍️</SectionLabel>
-        <div style={{ fontSize: 10, color: C.sub, marginBottom: 10, lineHeight: 1.6 }}>Set a treat for hitting each milestone.</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {SPLURGE.map(m => (
-            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", background: m.earned ? "rgba(192,132,160,0.08)" : C.surface, border: `1px ${m.earned ? "solid rgba(192,132,160,0.2)" : "dashed ${C.border}"}`, borderRadius: 9 }}>
-              <div style={{ fontSize: 16 }}>{m.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: m.earned ? "#7A3AA8" : C.sub }}>{m.label}</div>
-                <input value={splurgeRewards[m.id] || ""} onChange={e => setSplurgeRewards(p => ({ ...p, [m.id]: e.target.value }))} placeholder="Tap to set your splurge…" style={{ fontSize: 10, color: splurgeRewards[m.id] ? C.text : C.muted, background: "transparent", border: "none", outline: "none", width: "100%", fontStyle: splurgeRewards[m.id] ? "normal" : "italic", fontFamily: "inherit", marginTop: 2 }} />
-              </div>
-              {m.earned && <div style={{ fontSize: 8, fontWeight: 700, color: C.rose, background: "rgba(192,132,160,0.15)", borderRadius: 4, padding: "2px 7px" }}>EARNED</div>}
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
+  const totalWorkouts = Object.values(weeklyHistory).filter(h => h && h.workout).length;
+  const todayStr = dayKey(now);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(thisMon); d.setDate(d.getDate() + i);
+    const k = dayKey(d);
+    days.push({ key: k, active: isActive(k), isToday: k === todayStr, future: k > todayStr });
+  }
+  return { streak, best, weeks, current, totalWorkouts, days };
 }
 
 // ── EMOJI CATEGORIES for habit picker
@@ -1401,159 +1272,59 @@ const HABIT_COLORS = [
   "rgba(169,191,83,0.18)","rgba(255,112,166,0.18)","rgba(123,191,160,0.18)",
   "rgba(232,130,154,0.18)","rgba(223,132,189,0.18)",
 ];
-const SUPP_ROUTINE = [
-  { week: 1, time: "am", name: "D3 + K2 5,000 IU", note: "Nature Made · with fat", freq: "Every other day" },
-  { week: 1, time: "am", name: "Omega-3 500mg", note: "NatureWise", freq: "Daily" },
-  { week: 2, time: "pm", name: "Magnesium Glycinate 200mg", note: "Nature Made", freq: "Daily" },
-  { week: 3, time: "mid", name: "Vitamin C 500mg", note: "Nature Made Rose Hips", freq: "Daily" },
-  { week: 4, time: "pm", name: "Zinc 30mg", note: "Nutricost · 5 days/week", freq: "5 days/week" },
-  { week: 4, time: "am", name: "Collagen peptides", note: "Nutricost · in smoothie", freq: "Daily" },
-  { week: 5, time: "pm", name: "B Complex", note: "NatureWise · weekdays only", freq: "Weekdays" },
-];
 
-function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits, setHabits, habitsDone, setHabitsDone, cycleLog, setCycleLog, suppRoutineWeek, setSuppRoutineWeek, suppRoutineComplete, setSuppRoutineComplete, customSupps, setCustomSupps, customSuppsDone, setCustomSuppsDone }) {
-  const [pill, setPill] = useState("daily");
+// ── HABITS + STREAKS (one page) ──────────────────────────────────────────────
+function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits, setHabits, habitsDone, setHabitsDone, weeklyHistory, splurgeRewards, setSplurgeRewards, wide }) {
   const [expandedTracker, setExpandedTracker] = useState(null);
   const todayKey = getTodayKey();
   const waterOz = waterTaps * 8;
 
-  // Supplement streak
-  const calcSuppStreak = () => {
-    let s = 0;
-    const today = new Date();
-    for (let i = 0; i < 90; i++) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const done = loadS(`custom-supps-done-${k}`, {});
-      const checked = Object.values(done).filter(Boolean).length;
-      if (checked > 0) s++; else if (i > 0) break;
-    }
-    return s;
-  };
-  const suppStreak = calcSuppStreak();
-
-
-  // Add habit form state
+  // Add / edit habit form state
   const [showAddHabit, setShowAddHabit] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitEmoji, setNewHabitEmoji] = useState("✨");
   const [newHabitColor, setNewHabitColor] = useState(HABIT_COLORS[0]);
   const [editSheet, setEditSheet] = useState(null); // habit id
-  const [editField, setEditField] = useState(null); // "name"|"emoji"|"color"
+  const [editField, setEditField] = useState(null);
 
-  // Add supplement form state
-  const [showAddSupp, setShowAddSupp] = useState(false);
-  const [newSuppName, setNewSuppName] = useState("");
-  const [newSuppNote, setNewSuppNote] = useState("");
-  const [newSuppTime, setNewSuppTime] = useState("am");
-  const [suppEditSheet, setSuppEditSheet] = useState(null);
-
-  // Cycle state
-  const today = getTodayKey();
-  const todayCycle = cycleLog[today] || { flow: "", mucus: "", feelings: [], cravings: [], symptoms: [] };
-  const updateCycleToday = (patch) => {
-    const updated = { ...cycleLog, [today]: { ...todayCycle, ...patch } };
-    setCycleLog(updated);
-    saveS("cycle-log", updated);
-  };
-  const [cycleCategory, setCycleCategory] = useState("flow");
-  const [showPeriodDialog, setShowPeriodDialog] = useState(false);
-  const [periodDialogDate, setPeriodDialogDate] = useState(today);
-  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
-  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
-  const [selectedCalDay, setSelectedCalDay] = useState(null);
-
-  // Find last period start/end to calculate day + phase
-  const periodStarts = Object.entries(cycleLog).filter(([, v]) => v.periodEvent === "start").map(([k]) => k).sort();
-  const periodEnds = Object.entries(cycleLog).filter(([, v]) => v.periodEvent === "end").map(([k]) => k).sort();
-  const lastPeriodStart = periodStarts[periodStarts.length - 1];
-  const lastPeriodEnd = periodEnds[periodEnds.length - 1];
-  const isOnPeriod = lastPeriodStart && (!lastPeriodEnd || lastPeriodEnd < lastPeriodStart);
-  // Average period length from logged history (fallback to 5 days if no data)
-  const loggedPeriodLengths = periodEnds.map(endKey => {
-    const priorStarts = periodStarts.filter(s => s <= endKey);
-    if (priorStarts.length === 0) return null;
-    const startKey = priorStarts[priorStarts.length - 1];
-    return Math.round((new Date(endKey) - new Date(startKey)) / 86400000) + 1;
-  }).filter(Boolean);
-  const avgPeriodLength = loggedPeriodLengths.length > 0 ? Math.round(loggedPeriodLengths.reduce((a,b) => a+b, 0) / loggedPeriodLengths.length) : 5;
-  // If only an "end" was logged with no start, back-calculate an estimated start
-  const estimatedStartFromEnd = (!lastPeriodStart && lastPeriodEnd) ? (() => {
-    const d = new Date(lastPeriodEnd); d.setDate(d.getDate() - (avgPeriodLength - 1));
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  })() : null;
-  const effectiveStart = lastPeriodStart || estimatedStartFromEnd;
-  const dayOfCycle = effectiveStart ? Math.floor((new Date(today) - new Date(effectiveStart)) / 86400000) + 1 : null;
-  const AVG_CYCLE = 28;
-  const daysLeft = effectiveStart ? AVG_CYCLE - dayOfCycle : null;
-  const phase = isOnPeriod ? "period" : dayOfCycle ? (dayOfCycle <= 5 ? "period" : dayOfCycle <= 13 ? "follicular" : dayOfCycle <= 15 ? "ovulation" : "luteal") : null;
-  const nextPeriod = effectiveStart ? new Date(new Date(effectiveStart).getTime() + AVG_CYCLE * 86400000) : null;
-
-  const PHASE_INFO = {
-    period: { emoji: "🩸", label: "Period Phase", color: C.dotPink },
-    follicular: { emoji: "🌱", label: "Follicular Phase", color: C.sage },
-    ovulation: { emoji: "🌸", label: "Ovulation Phase", color: "#8A55BC" },
-    luteal: { emoji: "🌙", label: "Luteal Phase", color: C.plum },
-  };
-  const AFFIRMATIONS = {
-    period: ["Rest is productive. Let your body recover today.", "Softness is strength — honor what you need right now.", "You don't have to push today. Slowing down is enough."],
-    follicular: ["Fresh energy is building — a great day to start something new.", "Your creativity is peaking. Follow the spark.", "Momentum is on your side today — use it."],
-    ovulation: ["Your energy is magnetic today — trust your confidence and let yourself shine.", "You're at your most social, capable self right now.", "This is your power phase — go after what you want."],
-    luteal: ["Patience with yourself is the assignment today.", "Slow down, tune in, and give yourself grace.", "Your intuition is heightened — listen to it."],
-  };
-  const todayAffirmation = phase ? AFFIRMATIONS[phase][new Date().getDate() % AFFIRMATIONS[phase].length] : "Log your period to unlock daily affirmations tailored to your cycle.";
-
-  const CYCLE_CATEGORIES = [
-    { id: "flow", emoji: "🩸", label: "Flow", color: C.dotPink, options: [
-      { emoji: "💧", label: "Light" }, { emoji: "🩸", label: "Medium" }, { emoji: "🔴", label: "Heavy" }, { emoji: "⚪", label: "None" },
-    ]},
-    { id: "mucus", emoji: "💧", label: "Mucus", color: C.dotBlue, options: [
-      { emoji: "💦", label: "Watery" }, { emoji: "🥚", label: "Egg white" }, { emoji: "🤍", label: "Creamy" }, { emoji: "🍯", label: "Sticky" },
-    ]},
-    { id: "feelings", emoji: "😊", label: "Feelings", color: "#B27A3A", multi: true, options: [
-      { emoji: "⚡", label: "Energized" }, { emoji: "😴", label: "Exhausted" }, { emoji: "😰", label: "Anxious" }, { emoji: "😌", label: "Calm" },
-    ]},
-    { id: "cravings", emoji: "🍫", label: "Cravings", color: "#8A55BC", multi: true, options: [
-      { emoji: "🧂", label: "Salty" }, { emoji: "🍰", label: "Sweet" }, { emoji: "🍫", label: "Chocolate" }, { emoji: "🍞", label: "Carbs" },
-    ]},
-    { id: "symptoms", emoji: "🩹", label: "Symptoms", color: C.sage, multi: true, options: [
-      { emoji: "😣", label: "Cramps" }, { emoji: "🤕", label: "Headache" }, { emoji: "🫄", label: "Bloating" }, { emoji: "💆", label: "Tender" },
-    ]},
+  // Streak data
+  const W = computeWeekly(weeklyHistory);
+  const ever = Math.max(W.best, W.streak);
+  const BADGES = [
+    { id: "1w", emoji: "🌸", label: "First strong week", desc: `${WEEKLY_TARGET}+ active days in a week`, req: ever >= 1, todo: Math.max(0, 1 - ever), unit: " wk" },
+    { id: "4w", emoji: "💜", label: "4-week streak", desc: "4 strong weeks in a row", req: ever >= 4, todo: Math.max(0, 4 - ever), unit: " wk" },
+    { id: "8w", emoji: "🔥", label: "8-week streak", desc: "8 strong weeks in a row", req: ever >= 8, todo: Math.max(0, 8 - ever), unit: " wk" },
+    { id: "12w", emoji: "⚡", label: "12-week streak", desc: "12 strong weeks in a row", req: ever >= 12, todo: Math.max(0, 12 - ever), unit: " wk" },
+    { id: "26w", emoji: "👑", label: "6-month streak", desc: "26 strong weeks in a row", req: ever >= 26, todo: Math.max(0, 26 - ever), unit: " wk" },
+    { id: "100w", emoji: "💯", label: "100 workouts", desc: "Complete 100 workouts", req: W.totalWorkouts >= 100, todo: Math.max(0, 100 - W.totalWorkouts), unit: "" },
   ];
-  const activeCategory = CYCLE_CATEGORIES.find(c => c.id === cycleCategory);
-  const toggleCycleOption = (catId, label, multi) => {
-    if (multi) {
-      const curr = todayCycle[catId] || [];
-      const updated = curr.includes(label) ? curr.filter(x => x !== label) : [...curr, label];
-      updateCycleToday({ [catId]: updated });
-    } else {
-      updateCycleToday({ [catId]: todayCycle[catId] === label ? "" : label });
-    }
-  };
+  // keys "7" / "30" / "90" kept so any rewards you already typed in stay put
+  const SPLURGE = [
+    { id: "7", emoji: "🌸", label: "4-week reward", earned: ever >= 4 },
+    { id: "30", emoji: "🔥", label: "8-week reward", earned: ever >= 8 },
+    { id: "90", emoji: "👑", label: "12-week reward", earned: ever >= 12 },
+  ];
 
-  const logPeriodEvent = (dateKey, eventType) => {
-    const existing = cycleLog[dateKey] || {};
-    const updated = { ...cycleLog, [dateKey]: { ...existing, periodEvent: eventType } };
-    setCycleLog(updated);
-    saveS("cycle-log", updated);
-  };
+  // Month calendar
+  const today = new Date();
+  const year = today.getFullYear(); const month = today.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthStart = (new Date(year, month, 1).getDay() + 6) % 7;
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-  const PillBtn = ({ id, label }) => (
-    <button onClick={() => setPill(id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 20, fontSize: 11, fontWeight: 700, border: pill === id ? "none" : `1.5px solid ${C.border}`, background: pill === id ? C.rose : C.surface, color: pill === id ? "#fff" : C.sub, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{label}</button>
+  const heading = (t, sub) => (
+    <div style={{ margin: "0 2px 10px" }}>
+      <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>{t}</div>
+      {sub && <div style={{ fontSize: 10, color: C.sub, marginTop: 2 }}>{sub}</div>}
+    </div>
   );
 
   return (
-    <div>
-      {/* Pill tabs */}
-      <div style={{ display: "flex", gap: 7, overflowX: "auto", padding: "14px 14px 10px" }}>
-        <PillBtn id="daily" label="📊 Daily" />
-        <PillBtn id="supplements" label="💊 Supplements" />
-        <PillBtn id="cycle" label="🌸 Cycle" />
-      </div>
+    <div style={wide ? { padding: "16px 20px 28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22, alignItems: "start" } : { padding: "14px 14px 24px" }}>
 
-      {/* ── TRACKERS ── */}
-      {pill === "daily" && (
-        <div style={{ padding: "4px 14px 24px" }}>
+      {/* ───────── TODAY ───────── */}
+      <div>
+        {heading("Today", "Quick trackers and your daily checklist")}
           {/* Compact 2x2 tracker grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
             <div onClick={() => setExpandedTracker(expandedTracker === "water" ? null : "water")} style={{ background: `${C.dotBlue}10`, border: `1px solid ${C.dotBlue}30`, borderRadius: 14, padding: "12px 13px", cursor: "pointer" }}>
@@ -1737,377 +1508,142 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
               </div>
             );
           })()}
-        </div>
-      )}
+      </div>
 
-      {/* ── SUPPLEMENTS ── */}
-      {pill === "supplements" && (
-        <div style={{ padding: "4px 14px 24px" }}>
-          {suppRoutineComplete ? (
-            <>
-              {/* Achieved banner */}
-              <div style={{ background: "linear-gradient(135deg, rgba(169,191,83,0.1), rgba(123,191,160,0.1))", border: "1px solid rgba(169,191,83,0.25)", borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <span style={{ fontSize: 28 }}>🎉</span>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: C.dotGreen }}>Routine complete!</div>
-                    <div style={{ fontSize: 10, color: C.sub, marginTop: 2, lineHeight: 1.4 }}>You built your full stack. Now it's yours to customize.</div>
-                  </div>
-                </div>
-                <button onClick={() => {
-                  setSuppRoutineComplete(false);
-                  setSuppRoutineWeek(1);
-                  setCustomSupps([]);
-                  saveS("supp-routine-complete", false);
-                  saveS("supp-routine-week", 1);
-                  saveS("custom-supps", []);
-                }} style={{ width: "100%", padding: "7px", borderRadius: 8, border: "1px solid rgba(232,130,154,0.3)", background: "rgba(232,130,154,0.08)", color: C.amber, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                  ↩ Restart routine from Week 1
-                </button>
-              </div>
+      {/* ───────── STREAKS ───────── */}
+      <div style={wide ? undefined : { marginTop: 8 }}>
+        {heading("Streaks", `Weekly consistency · ${WEEKLY_TARGET}+ active days a week keeps it alive`)}
 
-              {/* Custom supplement list — main focus */}
-              <Card>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>My supplements</div>
-                  <div style={{ fontSize: 9, color: C.dotGreen, background: "rgba(169,191,83,0.1)", padding: "3px 9px", borderRadius: 20, fontWeight: 700 }}>
-                    {Object.values(customSuppsDone).filter(Boolean).length}/{customSupps.length} done
-                  </div>
-                </div>
-
-                {["am","mid","pm"].map(time => {
-                  const timeSups = customSupps.filter(s => s.time === time);
-                  if (timeSups.length === 0) return null;
-                  const timeLabel = time === "am" ? "☀️ Morning" : time === "mid" ? "🌤️ Afternoon" : "🌙 Evening";
-                  const timeColor = time === "am" ? C.dotPink : time === "mid" ? C.dotBlue : C.plum;
-                  return (
-                    <div key={time}>
-                      <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, color: timeColor, marginBottom: 9 }}>{timeLabel}</div>
-                      {timeSups.map(s => (
-                        <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
-                          <button onClick={() => setCustomSuppsDone(p => ({ ...p, [s.id]: !p[s.id] }))} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${customSuppsDone[s.id] ? C.dotGreen : C.border}`, background: customSuppsDone[s.id] ? "rgba(169,191,83,0.2)" : "transparent", color: C.dotGreen, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{customSuppsDone[s.id] ? "✓" : ""}</button>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: customSuppsDone[s.id] ? C.sub : C.text, textDecoration: customSuppsDone[s.id] ? "line-through" : "none" }}>{s.name}</div>
-                            {s.note && <div style={{ fontSize: 9, color: C.sub, marginTop: 1 }}>{s.note}</div>}
-                          </div>
-                          <button onClick={() => setSuppEditSheet(s.id)} style={{ fontSize: 14, color: C.muted, background: "none", border: "none", cursor: "pointer", padding: "0 2px" }}>···</button>
-                        </div>
-                      ))}
-                      <div style={{ height: 1, background: C.border, margin: "8px 0 10px" }} />
-                    </div>
-                  );
-                })}
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, padding: "8px 10px", background: "rgba(192,132,160,0.08)", borderRadius: 8 }}>
-                  <div style={{ fontSize: 10, color: C.sub }}>💊 Supplement streak</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.dotPurple }}>🔥 {suppStreak} days</div>
-                </div>
-                <button onClick={() => setShowAddSupp(true)} style={{ width: "100%", marginTop: 10, padding: 9, borderRadius: 9, border: `1px dashed ${C.border}`, background: "transparent", color: C.muted, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>+ Add a supplement</button>
-              </Card>
-
-              {/* Archived routine */}
-              <div style={{ padding: "2px 2px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0 8px", cursor: "pointer" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: C.muted }}>
-                    🗂️ Starter routine
-                    <span style={{ fontSize: 9, background: "rgba(169,191,83,0.12)", color: C.dotGreen, borderRadius: 10, padding: "2px 8px", fontWeight: 700 }}>✓ Achieved</span>
-                  </div>
-                  <span style={{ fontSize: 10, color: C.muted }}>▼</span>
-                </div>
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 11, padding: "11px 12px", opacity: 0.55 }}>
-                  <div style={{ fontSize: 9, color: "#7E6896", fontWeight: 700, textTransform: "uppercase", letterSpacing: .8, marginBottom: 8 }}>Completed weeks 1–5</div>
-                  {["Week 1 — D3+K2 + Omega-3","Week 2 — Added Magnesium","Week 3 — Added Vitamin C","Week 4 — Added Zinc + Collagen","Week 5 — Added B Complex"].map((w, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: i < 4 ? 7 : 0 }}>
-                      <div style={{ width: 18, height: 18, borderRadius: 5, background: "rgba(169,191,83,0.15)", border: "1px solid rgba(169,191,83,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: C.dotGreen, flexShrink: 0 }}>✓</div>
-                      <div style={{ fontSize: 11, color: "#5F4878" }}>{w}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            /* Routine in progress */
-            <Card>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>Week {suppRoutineWeek} of 5</div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {suppRoutineWeek < 5 && (
-                    <button onClick={() => setSuppRoutineWeek(p => Math.min(5, p + 1))} style={{ fontSize: 9, color: C.sub, background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>Next week →</button>
-                  )}
-                  {suppRoutineWeek === 5 && (
-                    <button onClick={() => {
-                      setSuppRoutineComplete(true);
-                      const allSupps = SUPP_ROUTINE.map(s => ({ ...s, id: `routine-${s.name.replace(/\s/g,'')}` }));
-                      setCustomSupps(allSupps);
-                    }} style={{ fontSize: 9, color: C.dotGreen, background: "rgba(169,191,83,0.1)", border: `1px solid rgba(169,191,83,0.3)`, borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>✓ Mark complete</button>
-                  )}
-                </div>
-              </div>
-
-              {["am","mid","pm"].map(time => {
-                const active = SUPP_ROUTINE.filter(s => s.time === time && s.week <= suppRoutineWeek);
-                const locked = SUPP_ROUTINE.filter(s => s.time === time && s.week > suppRoutineWeek);
-                if (active.length === 0 && locked.length === 0) return null;
-                const timeLabel = time === "am" ? "☀️ Morning" : time === "mid" ? "🌤️ Afternoon" : "🌙 Evening";
-                const timeColor = time === "am" ? C.dotPink : time === "mid" ? C.dotBlue : C.plum;
-                return (
-                  <div key={time} style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, color: timeColor, marginBottom: 9 }}>{timeLabel}</div>
-                    {active.map(s => (
-                      <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
-                        <button onClick={() => null} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{s.name}</div>
-                          <div style={{ fontSize: 9, color: C.sub, marginTop: 1 }}>{s.note}</div>
-                        </div>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: s.freq === "Daily" ? C.dotGreen : C.dotBlue, background: s.freq === "Daily" ? "rgba(169,191,83,0.1)" : "rgba(107,230,247,0.1)", borderRadius: 4, padding: "2px 6px", flexShrink: 0 }}>{s.freq}</div>
-                      </div>
-                    ))}
-                    {locked.map(s => (
-                      <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8, opacity: 0.25 }}>
-                        <div style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${C.border}`, flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{s.name}</div>
-                          <div style={{ fontSize: 9, color: C.sub }}>{s.note}</div>
-                        </div>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, background: C.inputBg, borderRadius: 4, padding: "2px 6px", flexShrink: 0 }}>Week {s.week}</div>
-                      </div>
-                    ))}
-                    <div style={{ height: 1, background: C.border, margin: "6px 0 10px" }} />
-                  </div>
-                );
-              })}
-
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "rgba(192,132,160,0.08)", borderRadius: 8 }}>
-                <div style={{ fontSize: 10, color: C.sub }}>💊 Supplement streak</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.dotPurple }}>🔥 {suppStreak} days</div>
-              </div>
-            </Card>
-          )}
-
-          {/* Add supplement form */}
-          {showAddSupp && (
-            <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end" }} onClick={() => setShowAddSupp(false)}>
-              <div style={{ background: C.surface, borderRadius: "16px 16px 0 0", padding: "16px 14px 32px", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
-                <div style={{ width: 36, height: 4, background: C.border, borderRadius: 2, margin: "0 auto 14px" }} />
-                <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 14 }}>Add supplement 💊</div>
-                <input value={newSuppName} onChange={e => setNewSuppName(e.target.value)} placeholder="Name + dose (e.g. Vitamin D 2000 IU)" style={{ width: "100%", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 9, padding: "9px 12px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
-                <input value={newSuppNote} onChange={e => setNewSuppNote(e.target.value)} placeholder="Brand / note (optional)" style={{ width: "100%", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 9, padding: "9px 12px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
-                <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.sub, marginBottom: 8 }}>Time of day</div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                  {[["am","☀️ Morning"],["mid","🌤️ Afternoon"],["pm","🌙 Evening"]].map(([k,l]) => (
-                    <button key={k} onClick={() => setNewSuppTime(k)} style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: newSuppTime === k ? `1.5px solid ${C.rose}` : `1px solid ${C.border}`, background: newSuppTime === k ? `${C.rose}18` : "transparent", color: newSuppTime === k ? C.rose : C.sub, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
-                  ))}
-                </div>
-                <button onClick={() => {
-                  if (!newSuppName.trim()) return;
-                  const s = { id: `s${Date.now()}`, name: newSuppName.trim(), note: newSuppNote.trim(), time: newSuppTime, freq: "Daily" };
-                  setCustomSupps(p => [...p, s]);
-                  setNewSuppName(""); setNewSuppNote(""); setNewSuppTime("am");
-                  setShowAddSupp(false);
-                }} style={{ width: "100%", padding: 10, borderRadius: 10, border: "none", background: C.rose, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Add supplement</button>
-              </div>
+        <Card>
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", border: `2px solid ${C.rose}`, background: "rgba(192,132,160,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#7A3AA8", lineHeight: 1 }}>{W.streak}</div>
+              <div style={{ fontSize: 8, color: C.sub, fontWeight: 700, letterSpacing: .5, marginTop: 2 }}>{W.streak === 1 ? "WEEK" : "WEEKS"}</div>
             </div>
-          )}
-
-          {/* Supp edit sheet */}
-          {suppEditSheet && (() => {
-            const s = customSupps.find(x => x.id === suppEditSheet);
-            if (!s) return null;
-            return (
-              <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end" }} onClick={() => setSuppEditSheet(null)}>
-                <div style={{ background: C.surface, borderRadius: "16px 16px 0 0", padding: "16px 14px 32px", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
-                  <div style={{ width: 36, height: 4, background: C.border, borderRadius: 2, margin: "0 auto 14px" }} />
-                  <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 4 }}>{s.name}</div>
-                  <div style={{ fontSize: 9, color: C.sub, marginBottom: 16 }}>{s.note}</div>
-                  {[
-                    { icon: "⏸️", label: "Pause supplement", action: () => setSuppEditSheet(null) },
-                    { icon: "🗑️", label: "Remove supplement", danger: true, action: () => { setCustomSupps(p => p.filter(x => x.id !== s.id)); setSuppEditSheet(null); } },
-                  ].map((opt, i) => (
-                    <button key={i} onClick={opt.action} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "11px 4px", background: "none", border: "none", borderBottom: i < 1 ? `1px solid ${C.border}` : "none", cursor: "pointer", color: opt.danger ? C.amber : C.text, fontFamily: "inherit", fontSize: 13 }}>
-                      <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{opt.icon}</span>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* ── CYCLE ── */}
-      {pill === "cycle" && (
-        <div style={{ padding: "4px 14px 24px" }}>
-          {/* Phase hero with affirmation */}
-          <div style={{ background: `linear-gradient(135deg, ${phase ? PHASE_INFO[phase].color : C.rose}12, rgba(107,170,196,0.06))`, border: `1px solid ${phase ? PHASE_INFO[phase].color : C.rose}30`, borderRadius: 14, padding: "16px", marginBottom: 10, textAlign: "center" }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color: phase ? PHASE_INFO[phase].color : C.rose }}>{dayOfCycle ? `Day ${dayOfCycle}` : "—"}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.plum, marginTop: 2 }}>{phase ? `${PHASE_INFO[phase].emoji} ${PHASE_INFO[phase].label}` : "Log your first period"}</div>
-            <div style={{ fontSize: 12, color: C.text, fontStyle: "italic", marginTop: 10, padding: "10px 12px", background: C.surface, borderRadius: 10, lineHeight: 1.5 }}>"{todayAffirmation}"</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 2 }}>Weekly streak</div>
+              <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.5 }}>Log a workout or yoga on {WEEKLY_TARGET}+ days each week. Rest days never break it.</div>
+            </div>
           </div>
-
-          {/* Log period button */}
-          <button onClick={() => { setPeriodDialogDate(today); setShowPeriodDialog(true); }} style={{ width: "100%", padding: 12, borderRadius: 12, border: "none", background: C.rose, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", marginBottom: 10, fontFamily: "inherit" }}>
-            🩸 Log Period {isOnPeriod ? "(currently on period)" : ""}
-          </button>
-
-          {/* Calendar view with period bars + symptom dots */}
-          <Card>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <button onClick={() => { const m = calendarMonth === 0 ? 11 : calendarMonth - 1; setCalendarMonth(m); setCalendarYear(calendarMonth === 0 ? calendarYear - 1 : calendarYear); }} style={{ background: "none", border: "none", fontSize: 16, color: C.muted, cursor: "pointer", padding: 4 }}>‹</button>
-              <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{new Date(calendarYear, calendarMonth).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
-              <button onClick={() => { const m = calendarMonth === 11 ? 0 : calendarMonth + 1; setCalendarMonth(m); setCalendarYear(calendarMonth === 11 ? calendarYear + 1 : calendarYear); }} style={{ background: "none", border: "none", fontSize: 16, color: C.muted, cursor: "pointer", padding: 4 }}>›</button>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.text }}>This week</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: W.current.hit ? C.dotGreen : C.rose }}>{W.current.count} / {WEEKLY_TARGET} active days{W.current.hit ? " ✓" : ""}</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center", marginBottom: 5 }}>
-              {["S","M","T","W","T","F","S"].map((d,i) => <div key={i} style={{ fontSize: 9, color: C.muted, fontWeight: 700 }}>{d}</div>)}
-            </div>
-            {(() => {
-              const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-              const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-              const isDayOnPeriod = (dateKey) => {
-                for (let i = 0; i < periodStarts.length; i++) {
-                  const s = periodStarts[i];
-                  const e = periodEnds.find(end => end >= s) || null;
-                  if (dateKey >= s && (!e || dateKey <= e)) return true;
-                }
-                return false;
-              };
-              // Fertile window: ~day 10-15 of cycle, based on effectiveStart
-              const isDayFertile = (dateKey) => {
-                if (!effectiveStart) return false;
-                const d = Math.floor((new Date(dateKey) - new Date(effectiveStart)) / 86400000) + 1;
-                const cycleDay = ((d - 1) % AVG_CYCLE) + 1;
-                return cycleDay >= 10 && cycleDay <= 15;
-              };
-              return (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
-                  {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const day = i + 1;
-                    const dateKey = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                    const onPeriod = isDayOnPeriod(dateKey);
-                    const isFertile = !onPeriod && isDayFertile(dateKey);
-                    const dayLog = cycleLog[dateKey];
-                    const hasSymptoms = dayLog && ((dayLog.symptoms||[]).length > 0 || (dayLog.feelings||[]).length > 0 || (dayLog.cravings||[]).length > 0);
-                    const isToday = dateKey === today;
-                    const isSel = selectedCalDay === dateKey;
-                    const bg = onPeriod ? C.dotPink : isFertile ? C.dotBlue : "transparent";
-                    return (
-                      <div key={day} onClick={() => setSelectedCalDay(isSel ? null : dateKey)} style={{ textAlign: "center", padding: "4px 0", borderRadius: 6, background: bg, border: isToday ? `2px solid #B8832F` : isSel ? `2px solid #8A55BC` : "2px solid transparent", cursor: "pointer" }}>
-                        <div style={{ fontSize: 10, fontWeight: (onPeriod || isFertile) ? 800 : 500, color: (onPeriod || isFertile) ? "#fff" : C.text }}>{day}</div>
-                        {hasSymptoms && <div style={{ width: 5, height: 5, borderRadius: "50%", background: (onPeriod || isFertile) ? "#fff" : C.sage, margin: "2px auto 0" }} />}
-                      </div>
-                    );
-                  })}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+              {W.days.map((d, i) => (
+                <div key={d.key} style={{ textAlign: "center", opacity: d.future ? 0.45 : 1 }}>
+                  <div style={{ fontSize: 9, color: C.muted, marginBottom: 4 }}>{["M","T","W","T","F","S","S"][i]}</div>
+                  <div style={{ height: 30, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, background: d.active ? C.rose : "transparent", border: d.isToday ? `2px solid ${C.rose}` : `1.5px solid ${d.active ? C.rose : C.border}`, color: "#fff" }}>{d.active ? "✓" : ""}</div>
                 </div>
-              );
-            })()}
-            <div style={{ display: "flex", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: C.dotPink }} />
-                <span style={{ fontSize: 9, color: C.sub }}>Period</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: C.dotBlue }} />
-                <span style={{ fontSize: 9, color: C.sub }}>Fertile</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.sage }} />
-                <span style={{ fontSize: 9, color: C.sub }}>Symptoms</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, border: "2px solid #B8832F", background: "rgba(232,169,58,0.15)" }} />
-                <span style={{ fontSize: 9, color: C.sub }}>Today</span>
-              </div>
+              ))}
             </div>
+          </div>
+        </Card>
 
-            {/* Selected day details */}
-            {selectedCalDay && (
-              <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(156,90,180,0.06)", borderRadius: 10, borderLeft: "3px solid #8A55BC" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "#8A55BC", marginBottom: 6 }}>{new Date(selectedCalDay).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
-                {cycleLog[selectedCalDay] && ["flow","mucus","feelings","cravings","symptoms"].map(cat => {
-                  const val = cycleLog[selectedCalDay][cat];
-                  if (!val || (Array.isArray(val) && val.length === 0)) return null;
-                  return <div key={cat} style={{ fontSize: 10, color: C.text, marginBottom: 3 }}><span style={{ color: C.sub, textTransform: "capitalize", fontWeight: 700 }}>{cat}:</span> {Array.isArray(val) ? val.join(", ") : val}</div>;
-                })}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 }}>
+          {[
+            { val: W.best, label: "Best streak", unit: "wks", color: C.rose },
+            { val: W.weeks.filter(w => w.hit).length, label: "Strong weeks, last 8", unit: "/ 8", color: C.dotGreen },
+            { val: W.totalWorkouts, label: "Total workouts", unit: "", color: C.plum },
+          ].map(b => (
+            <div key={b.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "11px 6px", textAlign: "center" }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: b.color, lineHeight: 1 }}>{b.val}<span style={{ fontSize: 10, color: C.sub, fontWeight: 600 }}> {b.unit}</span></div>
+              <div style={{ fontSize: 9, color: C.sub, marginTop: 5, fontWeight: 700 }}>{b.label}</div>
+            </div>
+          ))}
+        </div>
 
-                {/* Period event controls */}
-                {cycleLog[selectedCalDay]?.periodEvent ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(156,90,180,0.15)" }}>
-                    <div style={{ fontSize: 10, color: C.dotPink, fontWeight: 700 }}>🩸 Period {cycleLog[selectedCalDay].periodEvent}</div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => {
-                        const curr = cycleLog[selectedCalDay].periodEvent;
-                        logPeriodEvent(selectedCalDay, curr === "start" ? "end" : "start");
-                      }} style={{ fontSize: 9, fontWeight: 700, color: "#8A55BC", background: "rgba(156,90,180,0.12)", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>Switch to {cycleLog[selectedCalDay].periodEvent === "start" ? "End" : "Start"}</button>
-                      <button onClick={() => {
-                        const updated = { ...cycleLog };
-                        const { periodEvent, ...rest } = updated[selectedCalDay];
-                        updated[selectedCalDay] = rest;
-                        setCycleLog(updated);
-                        saveS("cycle-log", updated);
-                      }} style={{ fontSize: 9, fontWeight: 700, color: C.amber, background: `${C.amber}18`, border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>Remove</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", gap: 6, marginTop: 6, paddingTop: 6, borderTop: cycleLog[selectedCalDay] ? "1px solid rgba(156,90,180,0.15)" : "none" }}>
-                    <button onClick={() => logPeriodEvent(selectedCalDay, "start")} style={{ flex: 1, fontSize: 10, fontWeight: 700, color: "#fff", background: C.dotPink, border: "none", borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: "inherit" }}>+ Log as Start</button>
-                    <button onClick={() => logPeriodEvent(selectedCalDay, "end")} style={{ flex: 1, fontSize: 10, fontWeight: 700, color: C.plum, background: C.border, border: "none", borderRadius: 7, padding: "6px 8px", cursor: "pointer", fontFamily: "inherit" }}>+ Log as End</button>
-                  </div>
-                )}
+        <Card>
+          <SectionLabel>Last 8 weeks</SectionLabel>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 6 }}>
+            {W.weeks.map(w => (
+              <div key={dayKey(w.monday)} style={{ textAlign: "center" }}>
+                <div style={{ height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, background: w.hit ? C.rose : "transparent", color: w.hit ? "#fff" : C.sub, border: w.hit ? `1.5px solid ${C.rose}` : w.current ? `1.5px dashed ${C.rose}` : `1.5px solid ${C.border}` }}>{w.count}</div>
+                <div style={{ fontSize: 8, color: C.muted, marginTop: 4 }}>{w.monday.getMonth() + 1}/{w.monday.getDate()}</div>
               </div>
-            )}
-          </Card>
-
-          {/* Category pills - each with its own color */}
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 10, paddingBottom: 2 }}>
-            {CYCLE_CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => setCycleCategory(cat.id)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 16, fontSize: 10, fontWeight: 700, border: cycleCategory === cat.id ? "none" : `1.5px solid ${cat.color}50`, background: cycleCategory === cat.id ? cat.color : `${cat.color}18`, color: cycleCategory === cat.id ? "#fff" : cat.color, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}>{cat.emoji} {cat.label}</button>
             ))}
           </div>
+          <div style={{ fontSize: 9, color: C.sub, marginTop: 8 }}>Active days per week · filled = hit your {WEEKLY_TARGET}-day goal · dashed = this week</div>
+        </Card>
 
-          {/* Flat icon grid for active category */}
-          <Card>
-            <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: C.muted, marginBottom: 10 }}>{activeCategory.label} today</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-              {activeCategory.options.map(opt => {
-                const sel = activeCategory.multi ? (todayCycle[activeCategory.id] || []).includes(opt.label) : todayCycle[activeCategory.id] === opt.label;
-                return (
-                  <div key={opt.label} onClick={() => toggleCycleOption(activeCategory.id, opt.label, activeCategory.multi)} style={{ textAlign: "center", cursor: "pointer" }}>
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: sel ? activeCategory.color : C.inputBg, border: `1.5px solid ${sel ? activeCategory.color : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 5px" }}>{opt.emoji}</div>
-                    <div style={{ fontSize: 9, color: C.text, fontWeight: 600 }}>{opt.label}</div>
+        <Card>
+          <SectionLabel>{monthNames[month]} {year}</SectionLabel>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center", marginBottom: 5 }}>
+            {["M","T","W","T","F","S","S"].map((d, i) => <div key={i} style={{ fontSize: 9, color: C.muted }}>{d}</div>)}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, textAlign: "center" }}>
+            {Array.from({ length: monthStart }).map((_, i) => <div key={`e${i}`} />)}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const d = new Date(year, month, day);
+              const k = dayKey(d);
+              const h = weeklyHistory[k] || {};
+              const isToday = k === todayKey;
+              const isFuture = k > todayKey;
+              const hasDots = h.workout || h.yoga || h.hydration || h.habits;
+              const numColor = h.workout ? C.dotPink : h.yoga ? C.dotGreen : hasDots ? C.sub : isFuture ? "#BDA9CF" : C.muted;
+              return (
+                <div key={day} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "3px 0", borderRadius: 6, border: isToday ? `1.5px solid ${C.dotPink}` : "1.5px solid transparent", opacity: isFuture ? 0.2 : 1 }}>
+                  <div style={{ fontSize: 10, color: numColor, fontWeight: hasDots ? 700 : 400 }}>{day}</div>
+                  <div style={{ display: "flex", gap: 2, justifyContent: "center", minHeight: 7 }}>
+                    {h.workout && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotPink }} />}
+                    {h.yoga && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotGreen }} />}
+                    {h.hydration && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.dotBlue }} />}
+                    {h.habits && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.amber }} />}
                   </div>
-                );
-              })}
-            </div>
-          </Card>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            {[
+              { color: C.dotPink, label: "Workout" },
+              { color: C.dotGreen, label: "Yoga / recovery" },
+              { color: C.dotBlue, label: "Water goal hit" },
+              { color: C.amber, label: "All habits done" },
+            ].map(({ color, label }) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+                <span style={{ fontSize: 9, color: C.sub }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-          {/* Next period prediction - amber/gold accent */}
-          {nextPeriod && (
-            <Card style={{ textAlign: "center", background: "rgba(232,169,58,0.08)", borderColor: "rgba(232,169,58,0.35)" }}>
-              <div style={{ fontSize: 9, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Next period predicted</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#B27A3A" }}>{nextPeriod.toLocaleDateString("en-US", { month: "long", day: "numeric" })}</div>
-              <div style={{ fontSize: 10, color: C.sub, marginTop: 3 }}>in {Math.max(0, Math.round((nextPeriod - new Date()) / 86400000))} days · avg cycle {AVG_CYCLE} days</div>
-              {!lastPeriodStart && estimatedStartFromEnd && <div style={{ fontSize: 9, color: C.amber, marginTop: 6 }}>⚠ Start date estimated from your logged end date + average {avgPeriodLength}-day period</div>}
-            </Card>
-          )}
-
-          {/* Start/End dialog with editable date */}
-          {showPeriodDialog && (
-            <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)" }} onClick={() => setShowPeriodDialog(false)}>
-              <div style={{ background: C.surface, borderRadius: 16, padding: 20, width: 260, textAlign: "center" }} onClick={e => e.stopPropagation()}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 4 }}>Log Period 🩸</div>
-                <div style={{ fontSize: 11, color: C.sub, marginBottom: 12 }}>Choose the date, then start or end</div>
-                <input type="date" value={periodDialogDate} onChange={e => setPeriodDialogDate(e.target.value)} max={today} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.inputBg, color: C.text, fontSize: 12, fontFamily: "inherit", marginBottom: 14, boxSizing: "border-box" }} />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => { logPeriodEvent(periodDialogDate, "start"); setShowPeriodDialog(false); }} style={{ flex: 1, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: C.rose, color: "#fff", fontFamily: "inherit" }}>Start</button>
-                  <button onClick={() => { logPeriodEvent(periodDialogDate, "end"); setShowPeriodDialog(false); }} style={{ flex: 1, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: C.border, color: C.plum, fontFamily: "inherit" }}>End</button>
+        <Card>
+          <SectionLabel>Streak badges</SectionLabel>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {BADGES.map(b => (
+              <div key={b.id} style={{ background: b.req ? "rgba(192,132,160,0.1)" : C.surface, border: `1px solid ${b.req ? "rgba(192,132,160,0.3)" : C.border}`, borderRadius: 10, padding: 10, textAlign: "center", opacity: b.req ? 1 : 0.5 }}>
+                <div style={{ fontSize: 24, marginBottom: 4 }}>{b.emoji}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: b.req ? "#7A3AA8" : C.sub }}>{b.label}</div>
+                <div style={{ fontSize: 9, color: C.sub, marginTop: 2 }}>{b.desc}</div>
+                <div style={{ fontSize: 8, fontWeight: 700, color: b.req ? C.rose : C.muted, marginTop: 4, background: b.req ? "rgba(192,132,160,0.15)" : C.inputBg, borderRadius: 4, padding: "2px 6px", display: "inline-block" }}>
+                  {b.req ? "✓ UNLOCKED" : `${b.todo}${b.unit} to go`}
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        </Card>
+
+        <Card>
+          <SectionLabel>Splurge rewards 🛍️</SectionLabel>
+          <div style={{ fontSize: 10, color: C.sub, marginBottom: 10, lineHeight: 1.6 }}>Set a treat for hitting each milestone.</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {SPLURGE.map(m => (
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", background: m.earned ? "rgba(192,132,160,0.08)" : C.surface, border: m.earned ? "1px solid rgba(192,132,160,0.2)" : `1px dashed ${C.border}`, borderRadius: 9 }}>
+                <div style={{ fontSize: 16 }}>{m.emoji}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: m.earned ? "#7A3AA8" : C.sub }}>{m.label}</div>
+                  <input value={splurgeRewards[m.id] || ""} onChange={e => setSplurgeRewards(p => ({ ...p, [m.id]: e.target.value }))} placeholder="Tap to set your splurge…" style={{ fontSize: 10, color: splurgeRewards[m.id] ? C.text : C.muted, background: "transparent", border: "none", outline: "none", width: "100%", fontStyle: splurgeRewards[m.id] ? "normal" : "italic", fontFamily: "inherit", marginTop: 2 }} />
+                </div>
+                {m.earned && <div style={{ fontSize: 8, fontWeight: 700, color: C.rose, background: "rgba(192,132,160,0.15)", borderRadius: 4, padding: "2px 7px" }}>EARNED</div>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -2455,11 +1991,6 @@ export default function FitnessTracker() {
     { id: "h3", name: "Journal / gratitude", emoji: "📓", color: "rgba(123,191,160,0.15)", streak: 0, lastDone: "" },
   ]));
   const [habitsDone, setHabitsDone] = useState(() => loadS(`habits-done-${todayKey}`, {}));
-  const [cycleLog, setCycleLog] = useState(() => loadS("cycle-log", {}));
-  const [suppRoutineWeek, setSuppRoutineWeek] = useState(() => loadS("supp-routine-week", 1));
-  const [suppRoutineComplete, setSuppRoutineComplete] = useState(() => loadS("supp-routine-complete", false));
-  const [customSupps, setCustomSupps] = useState(() => loadS("custom-supps", []));
-  const [customSuppsDone, setCustomSuppsDone] = useState(() => loadS(`custom-supps-done-${todayKey}`, {}));
   const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
@@ -2491,10 +2022,6 @@ export default function FitnessTracker() {
       });
       setHabits(decayedHabits);
       saveS("habits-list", decayedHabits);
-      setCycleLog(loadS("cycle-log", {}));
-      setSuppRoutineWeek(loadS("supp-routine-week", 1));
-      setSuppRoutineComplete(loadS("supp-routine-complete", false));
-      setCustomSupps(loadS("custom-supps", []));
       setMeasurements(loadS("body-measurements", { waist: "", hips: "", arms: "", thighs: "" }));
       setSplurgeRewards(loadS("splurge-rewards", { "7": "", "30": "", "90": "" }));
     });
@@ -2514,11 +2041,6 @@ export default function FitnessTracker() {
   useEffect(() => { saveS("body-measurements", measurements); }, [measurements]);
   useEffect(() => { saveS("habits-list", habits); }, [habits]);
   useEffect(() => { saveS(`habits-done-${todayKey}`, habitsDone); }, [habitsDone]);
-  useEffect(() => { saveS("cycle-log", cycleLog); }, [cycleLog]);
-  useEffect(() => { saveS("supp-routine-week", suppRoutineWeek); }, [suppRoutineWeek]);
-  useEffect(() => { saveS("supp-routine-complete", suppRoutineComplete); }, [suppRoutineComplete]);
-  useEffect(() => { saveS("custom-supps", customSupps); }, [customSupps]);
-  useEffect(() => { saveS(`custom-supps-done-${todayKey}`, customSuppsDone); }, [customSuppsDone]);
 
   const day = DAYS.find(d => d.id === selectedDay);
   const exKeys = day.exercises.map(e => `${selectedDay}-${e.id}`);
@@ -2534,6 +2056,13 @@ export default function FitnessTracker() {
     setWeeklyHistory(updated);
     saveS("weekly-history", updated);
   };
+  useEffect(() => {
+    if (waterOz >= WATER_GOAL_OZ && !(weeklyHistory[getTodayKey()] || {}).hydration) markTodayDots({ hydration: true });
+  }, [waterOz]);
+  useEffect(() => {
+    const allDone = habits.length > 0 && habits.every(h => habitsDone[h.id]);
+    if (allDone && !(weeklyHistory[getTodayKey()] || {}).habits) markTodayDots({ habits: true });
+  }, [habitsDone, habits]);
   const markDayDone = () => {
     // Snapshot today's logged sets into exercise history so "Previous: X lb × Y" has data next time.
     if (!day.isFlexible) {
@@ -2566,7 +2095,6 @@ export default function FitnessTracker() {
   ];
   const MORE_TABS = [
     { k: "yoga", emoji: "🪷", label: "Yoga" },
-    { k: "streak", emoji: "✴️", label: "Streak" },
     { k: "shopping", emoji: "🛒", label: "Shopping List" },
   ];
   const isMoreTab = MORE_TABS.some(t => t.k === activeTab);
@@ -2628,8 +2156,7 @@ export default function FitnessTracker() {
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
         {activeTab === "home" && <HomeTab weeklyWorkouts={weeklyWorkouts} weeklyHistory={weeklyHistory} waterOz={waterOz} dailyStats={dailyStats} weightLog={weightLog} setActiveTab={setActiveTab} wide={wide} vh={vh} />}
-        {activeTab === "streak" && <div style={wide ? { maxWidth: 1100, margin: "0 auto" } : undefined}><StreakTab weeklyHistory={weeklyHistory} weightLog={weightLog} splurgeRewards={splurgeRewards} setSplurgeRewards={setSplurgeRewards} habits={habits} wide={wide} /></div>}
-        {activeTab === "habits" && <div style={wide ? { maxWidth: 860, margin: "0 auto" } : undefined}><HabitsTab waterTaps={waterTaps} setWaterTaps={setWaterTaps} dailyStats={dailyStats} setDailyStats={setDailyStats} habits={habits} setHabits={setHabits} habitsDone={habitsDone} setHabitsDone={setHabitsDone} cycleLog={cycleLog} setCycleLog={setCycleLog} suppRoutineWeek={suppRoutineWeek} setSuppRoutineWeek={setSuppRoutineWeek} suppRoutineComplete={suppRoutineComplete} setSuppRoutineComplete={setSuppRoutineComplete} customSupps={customSupps} setCustomSupps={setCustomSupps} customSuppsDone={customSuppsDone} setCustomSuppsDone={setCustomSuppsDone} /></div>}
+        {activeTab === "habits" && <div style={wide ? { maxWidth: 1200, margin: "0 auto" } : undefined}><HabitsTab waterTaps={waterTaps} setWaterTaps={setWaterTaps} dailyStats={dailyStats} setDailyStats={setDailyStats} habits={habits} setHabits={setHabits} habitsDone={habitsDone} setHabitsDone={setHabitsDone} weeklyHistory={weeklyHistory} splurgeRewards={splurgeRewards} setSplurgeRewards={setSplurgeRewards} wide={wide} /></div>}
         {activeTab === "weight" && <div style={wide ? { maxWidth: 1100, margin: "0 auto" } : undefined}><WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} wide={wide} /></div>}
         {activeTab === "yoga" && <div style={wide ? { maxWidth: 860, margin: "0 auto" } : undefined}><YogaTab markTodayDots={markTodayDots} /></div>}
 
