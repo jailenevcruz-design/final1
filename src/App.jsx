@@ -726,8 +726,9 @@ const SHOPPING_CATEGORIES = [
   { id: "drinks", label: "Drinks", emoji: "🥤", items: ["V8 Energy drinks", "Kombucha", "Green tea", "Herbal tea", "Unsweetened coconut water", "Water"] },
 ];
 
-function ShoppingListTab({ shoppingChecked, setShoppingChecked, extraItems, setExtraItems }) {
-  const [openCat, setOpenCat] = useState(null);
+function ShoppingListTab({ shoppingChecked, setShoppingChecked, extraItems, setExtraItems, wide }) {
+  const [openCats, setOpenCats] = useState({});
+  const toggleCat = (id) => setOpenCats(prev => wide ? { ...prev, [id]: !prev[id] } : { [id]: !prev[id] });
   const [newItem, setNewItem] = useState("");
 
   const toggle = (key) => setShoppingChecked(prev => ({ ...prev, [key]: !prev[key] }));
@@ -749,8 +750,8 @@ function ShoppingListTab({ shoppingChecked, setShoppingChecked, extraItems, setE
   };
 
   return (
-    <div style={{ padding: "14px 14px 24px" }}>
-      <Card style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={wide ? { padding: "18px 22px 28px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, alignItems: "start" } : { padding: "14px 14px 24px" }}>
+      <Card style={{ display: "flex", justifyContent: "space-between", alignItems: "center", ...(wide ? { marginBottom: 0 } : {}) }}>
         <div>
           <SectionLabel>Grocery list</SectionLabel>
           <div style={{ fontSize: 12, color: C.sub }}>{checkedCount}/{totalItems} in cart</div>
@@ -759,7 +760,7 @@ function ShoppingListTab({ shoppingChecked, setShoppingChecked, extraItems, setE
       </Card>
 
       {/* Add your own item */}
-      <Card>
+      <Card style={wide ? { gridColumn: "span 2", marginBottom: 0 } : undefined}>
         <div style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1 }}>
             <TxtInput value={newItem} onChange={setNewItem} placeholder="Add an item…" />
@@ -786,11 +787,11 @@ function ShoppingListTab({ shoppingChecked, setShoppingChecked, extraItems, setE
 
       {/* Collapsible categories — keeps scroll short */}
       {SHOPPING_CATEGORIES.map(cat => {
-        const isOpen = openCat === cat.id;
+        const isOpen = !!openCats[cat.id];
         const catChecked = cat.items.filter(item => shoppingChecked[`${cat.id}-${item}`]).length;
         return (
-          <div key={cat.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 8, overflow: "hidden" }}>
-            <button onClick={() => setOpenCat(isOpen ? null : cat.id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+          <div key={cat.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: wide ? 0 : 8, overflow: "hidden" }}>
+            <button onClick={() => toggleCat(cat.id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
               <span style={{ fontSize: 18 }}>{cat.emoji}</span>
               <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.text }}>{cat.label}</span>
               <span style={{ fontSize: 10, color: C.sub }}>{catChecked}/{cat.items.length}</span>
@@ -1052,7 +1053,7 @@ function YogaTab({ markTodayDots }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
-function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog, setActiveTab }) {
+function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog, setActiveTab, wide, vh }) {
   const CAROUSEL = [
     { src: "/images/IMG_7875.jpeg", pos: "center 40%", quote: '"She is fierce. She is strong. She is her own goal."' },
     { src: "/images/IMG_7872.jpeg", pos: "center 20%", quote: '"Every rep brings you closer to her."' },
@@ -1120,8 +1121,8 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog
   const topNudges = nudges.slice(0, 2);
 
   return (
-    <div>
-      <div style={{ position: "relative", height: 380, overflow: "hidden" }}>
+    <div style={wide ? { display: "grid", gridTemplateColumns: "minmax(300px, 38%) 1fr", alignItems: "start" } : undefined}>
+      <div style={{ position: wide ? "sticky" : "relative", top: 0, height: wide ? Math.max(360, (vh || 768) - 72) : 380, overflow: "hidden" }}>
         {CAROUSEL.map((s, i) => (
           <div key={i} style={{ position: "absolute", inset: 0, opacity: i === slide ? 1 : 0, transition: "opacity 1.1s ease" }}>
             <img src={s.src} alt="inspo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: s.pos, display: "block" }} />
@@ -1137,17 +1138,17 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog
           </div>
         ))}
       </div>
-      <div style={{ padding: "16px 16px 20px" }}>
+      <div style={wide ? { padding: "24px 28px", display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 14, alignItems: "start", alignContent: "start" } : { padding: "16px 16px 20px" }}>
 
         {/* Greeting + nudges */}
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ marginBottom: 14, gridColumn: "1 / -1" }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 2 }}>
             {timeGreeting} {weather ? `· ${weather.temp}°` : ""}
           </div>
           <div style={{ fontSize: 11, color: C.sub }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
         </div>
         {topNudges.map((n, i) => (
-          <div key={i} style={{ background: "rgba(192,132,160,0.08)", border: `1px solid rgba(192,132,160,0.2)`, borderRadius: 12, padding: "11px 14px", marginBottom: 9 }}>
+          <div key={i} style={{ background: "rgba(192,132,160,0.08)", border: `1px solid rgba(192,132,160,0.2)`, borderRadius: 12, padding: "11px 14px", marginBottom: 9, gridColumn: "1 / -1" }}>
             <div style={{ fontSize: 12, color: "#7A3AA8", fontWeight: 600, lineHeight: 1.5 }}>{n.msg}</div>
           </div>
         ))}
@@ -1203,7 +1204,7 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog
               { emoji: "💧", label: "Water", color: C.dotBlue, bg: "rgba(107,230,247,0.12)", tab: "habits" },
               { emoji: "😴", label: "Sleep", color: C.plum, bg: "rgba(160,124,192,0.12)", tab: "habits" },
             ].map(q => (
-              <button key={q.label} onClick={() => setActiveTab(q.tab)} style={{ flex: 1, padding: "12px 4px", borderRadius: 12, fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, background: q.bg, color: q.color, fontFamily: "inherit" }}>
+              <button key={q.label} onClick={() => setActiveTab(q.tab)} style={{ flex: "1 1 0", minWidth: 0, padding: "12px 4px", borderRadius: 12, fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, background: q.bg, color: q.color, fontFamily: "inherit" }}>
                 <span style={{ fontSize: 19 }}>{q.emoji}</span>
                 <span>{q.label}</span>
               </button>
@@ -1215,7 +1216,7 @@ function HomeTab({ weeklyWorkouts, weeklyHistory, waterOz, dailyStats, weightLog
   );
 }
 
-function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards, habits }) {
+function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards, habits, wide }) {
   const today = new Date();
   let streak = 0;
   for (let i = 0; i < 365; i++) {
@@ -1270,7 +1271,7 @@ function StreakTab({ weeklyHistory, weightLog, splurgeRewards, setSplurgeRewards
   const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const todayKey = getTodayKey();
   return (
-    <div style={{ padding: "16px 14px 24px" }}>
+    <div className={wide ? "wide-cols" : undefined} style={{ padding: "16px 14px 24px" }}>
       <Card style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <div style={{ width: 58, height: 58, borderRadius: "50%", border: `2px solid ${C.rose}`, background: "rgba(192,132,160,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <div style={{ fontSize: 22, fontWeight: 800, color: "#7A3AA8" }}>{streak}</div>
@@ -2111,11 +2112,11 @@ function HabitsTab({ waterTaps, setWaterTaps, dailyStats, setDailyStats, habits,
   );
 }
 
-function WeightTab({ weightLog, setWeightLog, measurements, setMeasurements }) {
+function WeightTab({ weightLog, setWeightLog, measurements, setMeasurements, wide }) {
   const latest = weightLog.length > 0 ? parseFloat(weightLog[0].weight) : START_WEIGHT;
   const changeSinceStart = +(latest - START_WEIGHT).toFixed(1);
   return (
-    <div style={{ padding: "16px 14px 24px" }}>
+    <div className={wide ? "wide-cols" : undefined} style={{ padding: "16px 14px 24px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
         {[
           { label: "Current", val: `${latest}`, unit: "lbs", color: "#8A55BC" },
@@ -2321,78 +2322,113 @@ function WorkoutExerciseCard({ ex, exKey, done, dayColor, checkEx, previous }) {
   );
 }
 
-function WorkoutTab({ selectedDay, setSelectedDay, checked, checkEx, weeklyWorkouts, markDayDone, day, pct, doneCount, exKeys, exerciseHistory }) {
+function useViewport() {
+  const read = () => ({ w: window.innerWidth, h: window.innerHeight });
+  const [vp, setVp] = useState(read);
+  useEffect(() => {
+    const on = () => setVp(read());
+    window.addEventListener("resize", on);
+    window.addEventListener("orientationchange", on);
+    return () => { window.removeEventListener("resize", on); window.removeEventListener("orientationchange", on); };
+  }, []);
+  // "wide" = landscape tablet / desktop: side rail + multi-column screens
+  return { ...vp, wide: vp.w >= 900 && vp.w > vp.h };
+}
+
+function WorkoutTab({ selectedDay, setSelectedDay, checked, checkEx, weeklyWorkouts, markDayDone, day, pct, doneCount, exKeys, exerciseHistory, wide, vh }) {
   const photo = DAY_PHOTOS[selectedDay];
+  const bannerH = wide ? Math.min(300, Math.max(190, Math.round((vh || 768) * 0.34))) : 220;
+
+  const banner = photo && (
+    <div style={{ position: "relative", height: bannerH, overflow: "hidden", borderRadius: wide ? 16 : 0 }}>
+      <img src={photo.src} alt="inspo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: photo.pos, display: "block" }} />
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(to bottom, rgba(58,37,82,0.75) 0%, transparent 100%)" }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 130, background: "linear-gradient(to top, rgba(58,37,82,1) 0%, rgba(58,37,82,0.6) 60%, transparent 100%)" }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 16px 14px" }}>
+        <div style={{ fontSize: 9, fontWeight: 800, color: "#EBD3FA", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>Day {selectedDay} · {day.focus}</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 8 }}>{day.label.replace(`Day ${selectedDay} — `, "")} {day.isFlexible ? "🚶" : "💪"}</div>
+        {!day.isFlexible && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ flex: 1, height: 4, borderRadius: 2, background: C.border, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: "#E3B8F7" }} />
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#EBD3FA" }}>{doneCount}/{exKeys.length} done</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const dayStrip = (
+    <div style={{ display: "flex", gap: 6, marginBottom: wide ? 0 : 14, overflowX: wide ? "visible" : "auto", flexWrap: wide ? "wrap" : "nowrap" }}>
+      {DAYS.map(d => (
+        <button key={d.id} onClick={() => setSelectedDay(d.id)} style={{ flexShrink: 0, padding: wide ? "10px 18px" : "7px 14px", borderRadius: 10, fontSize: wide ? 12 : 10, fontWeight: 700, cursor: "pointer", border: selectedDay === d.id ? `1.5px solid ${d.color}` : `1.5px solid ${C.border}`, background: weeklyWorkouts[d.id] ? `${d.color}18` : selectedDay === d.id ? `${d.color}12` : C.surface, color: selectedDay === d.id ? d.color : weeklyWorkouts[d.id] ? d.color : C.muted, fontFamily: "inherit" }}>
+          {weeklyWorkouts[d.id] ? "✓" : d.id}
+        </button>
+      ))}
+    </div>
+  );
+
+  const finish = !weeklyWorkouts[selectedDay] ? (
+    <button onClick={markDayDone} style={{ width: "100%", marginTop: wide ? 0 : 6, padding: 12, borderRadius: 12, border: "none", background: `linear-gradient(135deg, ${day.color}, #B27AD8)`, color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>{day.isFlexible ? `🔥 Mark Day ${selectedDay} Complete` : "Complete Workout"}</button>
+  ) : (
+    <div style={{ textAlign: "center", color: day.color, fontSize: 12, fontWeight: 700, padding: "12px 0" }}>✓ Day {selectedDay} logged this week!</div>
+  );
+
+  const flexibleCard = (
+    <Card accent={day.color} style={wide ? { gridColumn: "1 / -1" } : undefined}>
+      <SectionLabel>Flexible movement day</SectionLabel>
+      <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.7, marginBottom: 10 }}>{day.note}</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {day.options && day.options.map(o => (
+          <span key={o} style={{ fontSize: 11, color: day.color, background: `${day.color}18`, borderRadius: 8, padding: "5px 10px", fontWeight: 600 }}>{o}</span>
+        ))}
+      </div>
+    </Card>
+  );
+
+  const exerciseCards = day.exercises.map(ex => {
+    const key = `${selectedDay}-${ex.id}`;
+    const done = !!checked[key];
+    return <WorkoutExerciseCard key={ex.id} ex={ex} exKey={key} done={done} dayColor={day.color} checkEx={checkEx} previous={exerciseHistory?.[ex.id]} />;
+  });
+
+  if (wide) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 31%) 1fr", gap: 20, padding: "16px 20px 24px", alignItems: "start" }}>
+        {/* Left: stays in view while the exercise list scrolls */}
+        <div style={{ position: "sticky", top: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          {banner}
+          {dayStrip}
+          {finish}
+        </div>
+        {/* Right: exercises in two independent columns (a card expanding never shifts its neighbour) */}
+        {day.isFlexible ? (
+          <div>{flexibleCard}</div>
+        ) : (
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>{exerciseCards.slice(0, Math.ceil(exerciseCards.length / 2))}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>{exerciseCards.slice(Math.ceil(exerciseCards.length / 2))}</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Photo banner */}
-      {photo && (
-        <div style={{ position: "relative", height: 220, overflow: "hidden" }}>
-          <img src={photo.src} alt="inspo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: photo.pos, display: "block" }} />
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(to bottom, rgba(58,37,82,0.75) 0%, transparent 100%)" }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 130, background: "linear-gradient(to top, rgba(58,37,82,1) 0%, rgba(58,37,82,0.6) 60%, transparent 100%)" }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 16px 14px" }}>
-            <div style={{ fontSize: 9, fontWeight: 800, color: day.color, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>Day {selectedDay} · {day.focus}</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 8 }}>{day.label.replace(`Day ${selectedDay} — `, "")} {day.isFlexible ? "🚶" : "💪"}</div>
-            {!day.isFlexible && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ flex: 1, height: 4, borderRadius: 2, background: C.border, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: day.color }} />
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: day.color }}>{doneCount}/{exKeys.length} done</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {banner}
       <div style={{ padding: "14px 14px" }}>
-        {/* Day strip */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto" }}>
-          {DAYS.map(d => (
-            <button key={d.id} onClick={() => setSelectedDay(d.id)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 10, fontSize: 10, fontWeight: 700, cursor: "pointer", border: selectedDay === d.id ? `1.5px solid ${d.color}` : `1.5px solid ${C.border}`, background: weeklyWorkouts[d.id] ? `${d.color}18` : selectedDay === d.id ? `${d.color}12` : C.surface, color: selectedDay === d.id ? d.color : weeklyWorkouts[d.id] ? d.color : C.muted, fontFamily: "inherit" }}>
-              {weeklyWorkouts[d.id] ? "✓" : d.id}
-            </button>
-          ))}
-        </div>
-
-        {day.isFlexible ? (
-          <>
-            <Card accent={day.color}>
-              <SectionLabel>Flexible movement day</SectionLabel>
-              <div style={{ fontSize: 11, color: C.sub, lineHeight: 1.7, marginBottom: 10 }}>{day.note}</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {day.options.map(o => (
-                  <span key={o} style={{ fontSize: 11, color: day.color, background: `${day.color}18`, borderRadius: 8, padding: "5px 10px", fontWeight: 600 }}>{o}</span>
-                ))}
-              </div>
-            </Card>
-            {!weeklyWorkouts[selectedDay] ? (
-              <button onClick={markDayDone} style={{ width: "100%", marginTop: 6, padding: 12, borderRadius: 12, border: "none", background: `linear-gradient(135deg, ${day.color}, #B27AD8)`, color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>🔥 Mark Day {selectedDay} Complete</button>
-            ) : (
-              <div style={{ textAlign: "center", color: day.color, fontSize: 12, fontWeight: 700, padding: "12px 0" }}>✓ Day {selectedDay} logged this week!</div>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Exercise cards */}
-            {day.exercises.map(ex => {
-              const key = `${selectedDay}-${ex.id}`;
-              const done = !!checked[key];
-              return <WorkoutExerciseCard key={ex.id} ex={ex} exKey={key} done={done} dayColor={day.color} checkEx={checkEx} previous={exerciseHistory?.[ex.id]} />;
-            })}
-            {!weeklyWorkouts[selectedDay] ? (
-              <button onClick={markDayDone} style={{ width: "100%", marginTop: 6, padding: 12, borderRadius: 12, border: "none", background: `linear-gradient(135deg, ${day.color}, #B27AD8)`, color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>Complete Workout</button>
-            ) : (
-              <div style={{ textAlign: "center", color: day.color, fontSize: 12, fontWeight: 700, padding: "12px 0" }}>✓ Day {selectedDay} logged this week!</div>
-            )}
-          </>
-        )}
+        {dayStrip}
+        {day.isFlexible ? flexibleCard : exerciseCards}
+        {finish}
       </div>
     </div>
   );
 }
 
 export default function FitnessTracker() {
+  const { wide, h: vh } = useViewport();
   useEffect(() => { document.body.style.background = C.bg; document.body.style.margin = "0"; }, []);
   const todayKey = getTodayKey();
   const weekKey = getWeekKey();
@@ -2536,7 +2572,26 @@ export default function FitnessTracker() {
   const isMoreTab = MORE_TABS.some(t => t.k === activeTab);
 
   return (
-    <div style={{ fontFamily: "'Poppins','Segoe UI',sans-serif", background: C.bg, color: C.text, position: "fixed", top: 0, left: 0, right: 0, bottom: 0, maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Poppins','Segoe UI',sans-serif", background: C.bg, color: C.text, position: "fixed", top: 0, left: 0, right: 0, bottom: 0, maxWidth: wide ? 1440 : 900, margin: "0 auto", display: "flex", flexDirection: wide ? "row" : "column", overflow: "hidden" }}>
+
+      <style>{`.wide-cols{column-count:2;column-gap:16px}.wide-cols>*{break-inside:avoid}`}</style>
+
+      {/* Side rail (landscape tablets): every tab one tap away, no "More" drawer */}
+      {wide && (
+        <nav style={{ width: 96, flexShrink: 0, background: C.surface, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 4, padding: "12px 8px", overflowY: "auto" }}>
+          {[...BOTTOM_NAV, ...MORE_TABS].map(t => {
+            const on = activeTab === t.k;
+            return (
+              <button key={t.k} onClick={() => { setActiveTab(t.k); setShowMore(false); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 2px", minHeight: 62, borderRadius: 14, border: "none", cursor: "pointer", fontFamily: "inherit", background: on ? `${C.rose}1c` : "transparent" }}>
+                <span style={{ fontSize: 22, lineHeight: 1 }}>{t.emoji}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: on ? C.rose : C.muted, textAlign: "center", lineHeight: 1.2 }}>{t.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
+
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
       {/* Fixed Header */}
       <div style={{ padding: "14px 20px 10px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: C.bg, zIndex: 30 }}>
@@ -2572,19 +2627,19 @@ export default function FitnessTracker() {
 
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-        {activeTab === "home" && <HomeTab weeklyWorkouts={weeklyWorkouts} weeklyHistory={weeklyHistory} waterOz={waterOz} dailyStats={dailyStats} weightLog={weightLog} setActiveTab={setActiveTab} />}
-        {activeTab === "streak" && <StreakTab weeklyHistory={weeklyHistory} weightLog={weightLog} splurgeRewards={splurgeRewards} setSplurgeRewards={setSplurgeRewards} habits={habits} />}
-        {activeTab === "habits" && <HabitsTab waterTaps={waterTaps} setWaterTaps={setWaterTaps} dailyStats={dailyStats} setDailyStats={setDailyStats} habits={habits} setHabits={setHabits} habitsDone={habitsDone} setHabitsDone={setHabitsDone} cycleLog={cycleLog} setCycleLog={setCycleLog} suppRoutineWeek={suppRoutineWeek} setSuppRoutineWeek={setSuppRoutineWeek} suppRoutineComplete={suppRoutineComplete} setSuppRoutineComplete={setSuppRoutineComplete} customSupps={customSupps} setCustomSupps={setCustomSupps} customSuppsDone={customSuppsDone} setCustomSuppsDone={setCustomSuppsDone} />}
-        {activeTab === "weight" && <WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} />}
-        {activeTab === "yoga" && <YogaTab markTodayDots={markTodayDots} />}
+        {activeTab === "home" && <HomeTab weeklyWorkouts={weeklyWorkouts} weeklyHistory={weeklyHistory} waterOz={waterOz} dailyStats={dailyStats} weightLog={weightLog} setActiveTab={setActiveTab} wide={wide} vh={vh} />}
+        {activeTab === "streak" && <div style={wide ? { maxWidth: 1100, margin: "0 auto" } : undefined}><StreakTab weeklyHistory={weeklyHistory} weightLog={weightLog} splurgeRewards={splurgeRewards} setSplurgeRewards={setSplurgeRewards} habits={habits} wide={wide} /></div>}
+        {activeTab === "habits" && <div style={wide ? { maxWidth: 860, margin: "0 auto" } : undefined}><HabitsTab waterTaps={waterTaps} setWaterTaps={setWaterTaps} dailyStats={dailyStats} setDailyStats={setDailyStats} habits={habits} setHabits={setHabits} habitsDone={habitsDone} setHabitsDone={setHabitsDone} cycleLog={cycleLog} setCycleLog={setCycleLog} suppRoutineWeek={suppRoutineWeek} setSuppRoutineWeek={setSuppRoutineWeek} suppRoutineComplete={suppRoutineComplete} setSuppRoutineComplete={setSuppRoutineComplete} customSupps={customSupps} setCustomSupps={setCustomSupps} customSuppsDone={customSuppsDone} setCustomSuppsDone={setCustomSuppsDone} /></div>}
+        {activeTab === "weight" && <div style={wide ? { maxWidth: 1100, margin: "0 auto" } : undefined}><WeightTab weightLog={weightLog} setWeightLog={setWeightLog} measurements={measurements} setMeasurements={setMeasurements} wide={wide} /></div>}
+        {activeTab === "yoga" && <div style={wide ? { maxWidth: 860, margin: "0 auto" } : undefined}><YogaTab markTodayDots={markTodayDots} /></div>}
 
-        {activeTab === "today" && <WorkoutTab selectedDay={selectedDay} setSelectedDay={setSelectedDay} checked={checked} checkEx={checkEx} weeklyWorkouts={weeklyWorkouts} markDayDone={markDayDone} day={day} pct={pct} doneCount={doneCount} exKeys={exKeys} exerciseHistory={exerciseHistory} />}
-        {activeTab === "shopping" && <ShoppingListTab shoppingChecked={shoppingChecked} setShoppingChecked={setShoppingChecked} extraItems={extraShoppingItems} setExtraItems={setExtraShoppingItems} />}
+        {activeTab === "today" && <WorkoutTab selectedDay={selectedDay} setSelectedDay={setSelectedDay} checked={checked} checkEx={checkEx} weeklyWorkouts={weeklyWorkouts} markDayDone={markDayDone} day={day} pct={pct} doneCount={doneCount} exKeys={exKeys} exerciseHistory={exerciseHistory} wide={wide} vh={vh} />}
+        {activeTab === "shopping" && <ShoppingListTab shoppingChecked={shoppingChecked} setShoppingChecked={setShoppingChecked} extraItems={extraShoppingItems} setExtraItems={setExtraShoppingItems} wide={wide} />}
 
       </div>
 
       {/* Fixed Bottom nav */}
-      <div style={{ background: C.surface, borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 40, paddingBottom: 8, flexShrink: 0 }}>
+      {!wide && <div style={{ background: C.surface, borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 40, paddingBottom: 8, flexShrink: 0 }}>
         {BOTTOM_NAV.map(t => (
           <button key={t.k} onClick={() => { setActiveTab(t.k); setShowMore(false); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 0 4px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
             <span style={{ fontSize: 20, lineHeight: 1 }}>{t.emoji}</span>
@@ -2597,6 +2652,7 @@ export default function FitnessTracker() {
           <span style={{ fontSize: 8, fontWeight: 700, color: isMoreTab ? C.rose : C.muted }}>More</span>
           {isMoreTab && <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.rose }} />}
         </button>
+      </div>}
       </div>
     </div>
   );
